@@ -98,15 +98,6 @@ jupyter notebook notebooks/proyecto_1.ipynb
 - El conjunto final se guardará únicamente en `data/processed/`.
 - Cada integrante debe realizar contribuciones identificables mediante commits.
 
-## Trabajo colaborativo sugerido
-
-Cada integrante debe trabajar en una rama propia:
-
-```bash
-git checkout -b nombre-tarea
-```
-
-Después debe subir sus cambios y abrir un Pull Request hacia `main`.
 
 ## Publicación
 
@@ -117,4 +108,4 @@ El repositorio incluye una configuración base para publicar la documentación m
 
 La dirección esperada será:
 
-`https://Vann06.github.io/NOMBRE-DEL-REPOSITORIO/`
+`https://Vann06.github.io/Proyecto-1-Data-Science/`
