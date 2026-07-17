@@ -17,31 +17,34 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Clonar repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Instalar Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
       - name: Configurar GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
-      - name: Construir sitio
+      - name: Construir sitio Quarto
         run: quarto render
 
-      - name: Subir sitio
-        uses: actions/upload-pages-artifact@v3
+      - name: Subir sitio generado
+        uses: actions/upload-pages-artifact@v4
         with:
           path: _site
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
-      - name: Publicar
+      - name: Publicar en GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
