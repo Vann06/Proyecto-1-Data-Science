@@ -1,0 +1,27 @@
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.env
+.env.*
+_site/
+.quarto/
+
+# Los archivos crudos se agregarán conscientemente.
+# No ignorar data/raw de forma automática.
+
+# Los datos intermedios y procesados pueden regenerarse.
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+reports/figures/*
+!reports/figures/.gitkeep

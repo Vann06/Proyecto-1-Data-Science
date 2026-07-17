@@ -1,0 +1,33 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - index.qmd
+    - notebooks/*.ipynb
+
+website:
+  title: "Proyecto 1 · Data Science"
+  description: "Obtención y Limpieza de Datos · CC3084"
+  reader-mode: true
+  navbar:
+    left:
+      - href: index.qmd
+        text: Inicio
+      - href: notebooks/proyecto_1.ipynb
+        text: Cuaderno
+    tools:
+      - icon: github
+        href: https://github.com/Vann06/NOMBRE-DEL-REPOSITORIO
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    code-tools: true
+    code-copy: true
+    lang: es
+
+execute:
+  freeze: auto
