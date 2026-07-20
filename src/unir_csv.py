@@ -1,67 +1,92 @@
-"""Une los 23 CSV crudos sin limpiar ni modificar sus valores.
-
-Uso desde la raíz del repositorio:
-    python src/unir_csv.py
+"""Une los 23 CSV crudos sin cambiarlos
 
 Resultado:
-    data/interim/establecimientos_diversificado_raw_unificado.csv
+- conserva únicamente las 17 columnas originales
+- mantiene una sola fila de encabezados
+- elimina solo filas completamente vacías
+- no agrega columnas de trazabilidad
+- no limpia, corrige ni normaliza ningún otro dato.
+
+Ejecutar desde la raíz del repositorio:
+    python src/unir_csv.py
 """
 
 from pathlib import Path
+import csv
 
-import pandas as pd
-
-# Las rutas se calculan desde este archivo para que el programa funcione
-# aunque se ejecute desde otra carpeta.
 ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = ROOT / "data" / "raw"
-INTERIM_DIR = ROOT / "data" / "interim"
-OUTPUT_FILE = INTERIM_DIR / "establecimientos_diversificado_raw_unificado.csv"
+OUTPUT_FILE = (
+    ROOT
+    / "data"
+    / "interim"
+    / "establecimientos_diversificado_raw_unificado.csv"
+)
 
+archivos = sorted(RAW_DIR.glob("*.csv"))
 
-def unir_archivos() -> pd.DataFrame:
-    """Lee, valida y concatena los 23 CSV crudos."""
+if len(archivos) != 23:
+    raise ValueError(
+        f"Se esperaban 23 CSV y se encontraron {len(archivos)}."
+    )
 
-    archivos = sorted(RAW_DIR.glob("*.csv"))
+encabezado_referencia = None
+filas_unificadas = []
+filas_vacias_eliminadas = 0
 
-    if len(archivos) != 23:
-        raise ValueError(
-            f"Se esperaban 23 CSV en {RAW_DIR} y se encontraron {len(archivos)}."
-        )
+for archivo in archivos:
+    with archivo.open(
+        "r",
+        encoding="utf-8-sig",
+        newline="",
+    ) as fuente:
+        lector = csv.reader(fuente)
+        encabezado = next(lector)
 
-    dataframes = []
-    columnas_referencia = None
+        if encabezado_referencia is None:
+            encabezado_referencia = encabezado
+        elif encabezado != encabezado_referencia:
+            raise ValueError(
+                f"El encabezado de {archivo.name} no coincide."
+            )
 
-    for archivo in archivos:
-        # Todo se lee como texto para no alterar códigos ni teléfonos.
-        df_archivo = pd.read_csv(
-            archivo,
-            dtype="string",
-            keep_default_na=False,
-            encoding="utf-8-sig",
-        )
+        for fila in lector:
+            if len(fila) != len(encabezado_referencia):
+                raise ValueError(
+                    f"{archivo.name} contiene una fila con "
+                    f"{len(fila)} columnas; se esperaban "
+                    f"{len(encabezado_referencia)}."
+                )
 
-        if columnas_referencia is None:
-            columnas_referencia = list(df_archivo.columns)
-        elif list(df_archivo.columns) != columnas_referencia:
-            raise ValueError(f"El esquema de {archivo.name} no coincide.")
+            # Única exclusión: filas completamente vacías.
+            if all(celda == "" for celda in fila):
+                filas_vacias_eliminadas += 1
+                continue
 
-        # Estas dos columnas solo permiten rastrear el origen del registro.
-        df_archivo["archivo_origen"] = archivo.name
-        df_archivo["fila_origen"] = range(2, len(df_archivo) + 2)
-        dataframes.append(df_archivo)
+            filas_unificadas.append(fila)
 
-    df_unificado = pd.concat(dataframes, ignore_index=True)
+# Verificar que sí se haya encontrado un encabezado.
+if encabezado_referencia is None:
+    raise ValueError(
+        "No se encontró ningún encabezado en los archivos CSV."
+    )
 
-    INTERIM_DIR.mkdir(parents=True, exist_ok=True)
-    df_unificado.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
+OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-    return df_unificado
+with OUTPUT_FILE.open(
+    "w",
+    encoding="utf-8-sig",
+    newline="",
+) as destino:
+    escritor = csv.writer(destino)
+    escritor.writerow(encabezado_referencia)
+    escritor.writerows(filas_unificadas)
 
-
-if __name__ == "__main__":
-    datos = unir_archivos()
-    print("Archivos unidos: 23")
-    print(f"Registros: {len(datos):,}")
-    print("Variables originales: 17")
-    print(f"Archivo generado: {OUTPUT_FILE}")
+print(f"Archivos unidos: {len(archivos)}")
+print(f"Variables originales: {len(encabezado_referencia)}")
+print(f"Registros generados: {len(filas_unificadas):,}")
+print(
+    "Filas completamente vacías eliminadas: "
+    f"{filas_vacias_eliminadas}"
+)
+print(f"Archivo generado: {OUTPUT_FILE}")

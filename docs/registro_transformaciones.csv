@@ -1,1 +1,18 @@
-variable,problema_detectado,transformacion,registros_afectados,justificacion,fecha,responsable
+variable,problema_detectado,transformacion,justificacion,responsable
+CODIGO,NINGUNO,"Mantener la variable como texto, validar formato y unicidad. ",,VIANKA
+DISTRITO,"vacios e incompletos?",Convertir las cadenas vacías en valor faltante NA,Nos ayuda a identificar bien la ausencia de información sin inventarnos distritos ,VANKA
+DEPARTAMENTO,hay una separación entre CIUDAD CAPITAL y GUATEMALA,unificar esos y tratarlos ambos como GUATEMALA? ,eliminación de distinción que existe en la fuente ,VIANKA
+MUNICIPIO,NINGUNO?,NINGUNA,no hay nada que nos pueda afectar en el análisis ,VIANKA
+ESTABLECIMIENTO,"algunos vacíos, espacios múltiples, terminan con punto, comillas, tildes, ","Convertir cadenas vacías en valor faltante NA, elminar espacios inicio y al final ",ausencia de información ,VIANKA
+DIRECCION,,,,RICARDO
+TELEFONO,"vacíos, unos tienen 8 dígitos y otros menos, espacios, guiones, comas, dos o más teléfonos (Y), números 0000000,  ","unificar teléfonos con 22222 | 22222 y valor faltante NA, eliminar espacios y carácteres extras",Formato uniforme sin perder datos o números de contacto ,VIANKA
+SUPERVISOR,,,,RICARDO
+DIRECTOR,,,,RICARDO
+NIVEL,,,,RICARDO
+SECTOR,,,,RICARDO
+AREA,,,,RICARDO
+STATUS,,,,NADISSA
+MODALIDAD,,,,NADISSA
+JORNADA,,,,NADISSA
+PLAN,,,,NADISSA
+DEPARTAMENTAL,,,,NADISSA
