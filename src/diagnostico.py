@@ -373,6 +373,104 @@ def direccion_contaminada(serie: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(filas).sort_values("celdas", ascending=False)
 
 
+# ---------------------------------------------------------------
+# SUPERVISOR y DIRECTOR — nombres de persona
+# ---------------------------------------------------------------
+
+FRASE_AUSENCIA = re.compile(r"\bSIN\s+DAT", re.IGNORECASE)
+_LETRA = re.compile(r"[A-Za-zÑÁÉÍÓÚÜáéíóúñ]")
+
+
+def _palabras_con_letra(texto: str) -> int:
+    """Cuenta las palabras que contienen al menos una letra.
+
+    Un nombre de persona en estos datos siempre trae dos o más: SUPERVISOR
+    lo confirma, ni una celda de un solo token. Por eso "menos de dos"
+    delata la ausencia sin enumerar cada largo de guion, que es la debilidad
+    de una lista fija de marcadores: cuenta '--' pero se le escapa '---'.
+    """
+    return sum(bool(_LETRA.search(t)) for t in texto.split())
+
+
+def nombres_ausentes(serie: pd.Series) -> pd.DataFrame:
+    """Desglosa la ausencia real en una columna de nombres.
+
+    El conteo de nulos por lista fija es un piso: en DIRECTOR ve 1,814
+    faltantes pero se le escapan 360 celdas que no son un nombre y tampoco
+    están vacías —guiones de cualquier largo, '000000', 'X', 'SIN DATOS
+    (...)'—. Es el mismo hueco que la dirección que solo repite el municipio:
+    informa lo mismo que un vacío y ningún conteo de nulos la registra.
+
+    Las categorías son excluyentes y van de la más vacía a la más parecida a
+    un nombre; la ausencia total es la suma de las primeras cuatro filas.
+    """
+    texto = serie.fillna("").str.strip()
+    n_alpha = texto.map(_palabras_con_letra)
+    vacia = texto.eq("")
+    frase = texto.str.contains(FRASE_AUSENCIA).fillna(False)
+
+    categorias = {
+        "vacia": vacia,
+        "solo simbolos": ~vacia & n_alpha.eq(0),
+        "un solo token": ~vacia & n_alpha.eq(1),
+        "frase de ausencia": ~vacia & n_alpha.ge(2) & frase,
+    }
+    ausente = (
+        categorias["vacia"] | categorias["solo simbolos"]
+        | categorias["un solo token"] | categorias["frase de ausencia"]
+    )
+    categorias["nombre aparente"] = ~ausente
+
+    filas = [
+        {
+            "categoria": nombre,
+            "celdas": int(mascara.sum()),
+            "porcentaje": round(float(mascara.mean()) * 100, 2),
+            "ejemplos": " ¦ ".join(texto[mascara].unique()[:3]),
+        }
+        for nombre, mascara in categorias.items()
+    ]
+    return pd.DataFrame(filas)
+
+
+def variantes_nombre(nombre: pd.Series, geo: pd.Series) -> pd.DataFrame:
+    """Agrupa los nombres que solo difieren en su escritura.
+
+    Misma idea que variantes_establecimiento, con otro corte. Un supervisor
+    es una persona real atada a una jurisdicción, así que dos escrituras del
+    mismo nombre normalizado concentradas en una sola son casi siempre la
+    misma persona (CARLOS HUMBERTO GONZALEZ DE LEON y ...GONZÁLEZ DE LEÓN,
+    393 registros partidos por las tildes). El mismo nombre repartido entre
+    jurisdicciones ya pide revisión: puede ser un homónimo. Se ignoran las
+    celdas ausentes —no son nombres que fusionar— con la misma regla que
+    nombres_ausentes.
+    """
+    texto = nombre.fillna("").str.strip()
+    frase = texto.str.contains(FRASE_AUSENCIA).fillna(False)
+    es_nombre = texto.ne("") & texto.map(_palabras_con_letra).ge(2) & ~frase
+
+    grupos = pd.DataFrame({
+        "nombre": texto[es_nombre],
+        "clave": texto[es_nombre].map(normalizar_nombre),
+        "jurisdiccion": geo[es_nombre],
+    })
+
+    resumen = grupos.groupby("clave").agg(
+        escrituras=("nombre", "nunique"),
+        jurisdicciones=("jurisdiccion", "nunique"),
+        registros=("nombre", "size"),
+        formas=("nombre", lambda s: sorted(set(s))),
+    )
+
+    resumen = resumen[resumen["escrituras"] > 1].copy()
+    resumen["categoria"] = resumen["jurisdicciones"].map(
+        lambda n: "misma persona" if n == 1 else "revisar (homonimo?)"
+    )
+    return resumen.sort_values(
+        ["categoria", "escrituras"], ascending=[True, False]
+    )
+
+
 # ================================================================
 # TURNO 3 · NADISSA
 # Variables: NIVEL, SECTOR, AREA, STATUS, MODALIDAD, JORNADA, PLAN
