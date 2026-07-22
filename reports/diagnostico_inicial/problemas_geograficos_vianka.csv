@@ -1,0 +1,10 @@
+variable,problema,categoria,cantidad,porcentaje,requiere_limpieza,estrategia_sugerida,ejemplo
+CODIGO,Riesgo de tipado de un identificador numerico,tipo,11867,100.0,No,Conservar como texto y validar formato/unicidad; no convertir a numero,16-01-0001-46
+DISTRITO,Valor vacio,faltante,532,4.48,Si,Representar como NA; no imputar sin catalogo oficial,
+DISTRITO,Codigo incompleto que termina en guion,formato,70,0.59,Si,Marcar para revision; no completar digitos automaticamente,01- | 17- | 10-
+DISTRITO,Dos estructuras ampliamente usadas,formato,11335,95.52,Revisar,Conservar ambos formatos hasta contrastar el catalogo MINEDUC,16-006 | 16-01-0924
+DEPARTAMENTO,Categoria especial CIUDAD CAPITAL,dominio,2161,18.21,Si,Mapear geograficamente a Guatemala sin perder la condicion de capital,CIUDAD CAPITAL
+DEPARTAMENTO,Tildes omitidas en departamentos con acento normativo,ortografia,2025,17.06,Si,Usar nombres oficiales bien escritos para el dato final,PETEN -> Petén | QUICHE -> Quiché
+MUNICIPIO,Zonas capitalinas almacenadas como municipio,consistencia,2161,18.21,Si,Conservar la zona como sububicacion y asignar municipio Guatemala,ZONA 1 | ZONA 10 | ZONA 25
+MUNICIPIO,Etiquetas pendientes de validacion ortografica contra catalogo,catalogo,352,100.0,Si,Cruzar cada etiqueta con el catalogo oficial y conservar la escritura correcta,COBAN -> Cobán | AMATITLAN -> Amatitlán
+DEPARTAMENTAL,No siempre coincide textualmente con DEPARTAMENTO,consistencia,6094,51.35,Revisar,Tratarla como division administrativa propia; normalizar tildes sin forzar igualdad,GUATEMALA NORTE | GUATEMALA SUR | QUICHÉ NORTE
