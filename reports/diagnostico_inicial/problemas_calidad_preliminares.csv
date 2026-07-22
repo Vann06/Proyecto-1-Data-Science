@@ -1,0 +1,18 @@
+﻿variable,problema,categoria,cantidad,porcentaje,requiere_limpieza,estrategia_sugerida,ejemplo
+TELEFONO,Vacio,faltante,969,8.15,No,"Faltante legitimo, dejar NA",
+TELEFONO,"Formato no estandar (varios num., legado 7 dig, extension)",formato,251,2.11,Si,Separar con separar_numeros() a lista de 8 digitos,78208583-78209143 | 4085613
+ESTABLECIMIENTO,Tildes inconsistentes,formato,3223,27.11,Si,Normalizar solo para agrupar; conservar el nombre real,EDUCACION con y sin tilde
+ESTABLECIMIENTO,Comillas decorativas,formato,2961,24.9,Si,"Quitar comillas (adorno, no sintaxis)","COLEGIO ""LA INMACULADA"""
+ESTABLECIMIENTO,Espacios multiples,formato,1395,11.73,Si,Colapsar a un solo espacio,INSTITUTO MIXTO  NOCTURNO
+ESTABLECIMIENTO,Variantes de escritura (848 grupos posible dup.),duplicado,1483,12.47,Si,Comparar JORNADA/PLAN/DIRECCION antes de fusionar; CODIGO es la llave,CENTRO ... SAN JOSE (5 escrituras)
+DIRECCION,Vacia,faltante,99,0.83,No,"Faltante real, dejar NA",. | ---
+DIRECCION,Solo el municipio (faltante disfrazado),faltante,169,1.42,Si,"Reclasificar a NA; es un piso, no un total",COBAN | CHISEC
+DIRECCION,Municipio redundante al final,formato,948,7.97,Si,Recortar el sufijo del municipio,... ZONA 5 HUEHUETENANGO
+DIRECCION,Fecha incrustada al final,contaminacion,26,0.22,Si,Recortar la fecha final (exige dos separadores),... 22/02/20
+DIRECCION,Letra O por cero,contaminacion,10,0.08,Si,Corregir O->0 en contexto numerico,O AV. 0-06 | OC-150
+SUPERVISOR,Ausencia real,faltante,561,4.72,Si,Imputable: por DISTRITO en el plan,
+SUPERVISOR,Variantes por tildes del mismo nombre,duplicado,192,1.61,Si,Fusionar con normalizar_nombre(),GONZALEZ DE LEON con y sin tilde
+SUPERVISOR,"Caracter raro (O/0, tilde grave, apostrofo)",contaminacion,16,0.13,Si,Corregir grafias en contexto,ACEVED0 | ORTIZ grave | O'NELL
+DIRECTOR,Ausencia real (incluye 360 disfrazados que 3.c no vio),faltante,2174,18.28,Si,Convertir disfrazados a NA primero; no imputable,--- | 000000 | SIN DATOS
+DIRECTOR,Variantes por tildes del mismo nombre,duplicado,198,1.67,Si,Fusionar con normalizar_nombre(),VASQUEZ vs VASQUEZ REYES
+DIRECTOR,"Titulo incrustado (LIC., PEM.)",formato,18,0.15,Si,Separar el titulo del nombre,LIC. ELGI WALTER BOTEO GARCIA
