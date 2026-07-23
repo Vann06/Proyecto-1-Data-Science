@@ -481,9 +481,169 @@ def variantes_nombre(nombre: pd.Series, geo: pd.Series) -> pd.DataFrame:
 # - resumen final de los problemas potenciales de calidad.
 # ================================================================
 
+COLUMNAS_CATEGORICAS = [
+    "NIVEL", "SECTOR", "AREA", "STATUS", "MODALIDAD", "JORNADA", "PLAN",
+]
+
+
+def inventario_categorias(df: pd.DataFrame, columnas=COLUMNAS_CATEGORICAS) -> pd.DataFrame:
+    """Resume el dominio observado de cada variable categórica.
+
+    A diferencia de ESTABLECIMIENTO o DIRECCION, estas siete columnas son
+    de baja cardinalidad (entre 1 y 13 categorías) y ya llegan en
+    mayúsculas y sin espacios extremos: ninguna celda tiene minúsculas,
+    y strip() no cambia ningún conteo. El riesgo aquí no es de formato
+    sino de dominio y de tipo: ¿son categóricas verdaderas (factor), y
+    toda categoría observada es un valor esperado y no un faltante
+    disfrazado de categoría?
+    """
+    filas = []
+    for c in columnas:
+        serie = df[c].str.strip()
+        vc = serie.value_counts()
+        filas.append({
+            "variable": c,
+            "categorias_distintas": serie.nunique(),
+            "vacios": int((serie == "").sum()),
+            "categoria_minoritaria": vc.index[-1],
+            "frecuencia_minoritaria": int(vc.iloc[-1]),
+            "porcentaje_minoritaria": round(float(vc.iloc[-1]) / len(df) * 100, 2),
+        })
+    return pd.DataFrame(filas)
+
+
+def jornada_sin_jornada(df: pd.DataFrame) -> pd.Series:
+    """Evalúa si "SIN JORNADA" es un valor legítimo o un faltante disfrazado.
+
+    JORNADA trae la categoría "SIN JORNADA" en 1,099 filas (9.26%),
+    escrita como una categoría más, no como una celda vacía: ningún conteo
+    de nulos la detecta. La pregunta no es de formato sino de significado.
+    El cruce con PLAN responde la duda: casi toda "SIN JORNADA" cae en
+    planes semipresenciales o a distancia, que por diseño no tienen un
+    horario diario fijo. No es un faltante, es un valor real que describe
+    una modalidad sin jornada, y así debe quedar documentado en el
+    libro de códigos en vez de imputarse.
+    """
+    mascara = df["JORNADA"].str.strip().eq("SIN JORNADA")
+    return df.loc[mascara, "PLAN"].str.strip().value_counts()
+
+
+def area_sin_especificar(df: pd.DataFrame) -> pd.DataFrame:
+    """Aísla las filas donde AREA no informa nada (faltante disfrazado).
+
+    A diferencia de "SIN JORNADA", "SIN ESPECIFICAR" en AREA no tiene
+    ningún patrón que lo respalde como valor real: son solo 3 filas de
+    11,867 (0.03%), sin relación con PLAN, SECTOR ni STATUS. Se trata
+    como faltante genuino (NA), no como una cuarta categoría de área.
+    """
+    mascara = df["AREA"].str.strip().eq("SIN ESPECIFICAR")
+    return df.loc[mascara, ["CODIGO", "DEPARTAMENTO", "MUNICIPIO", "ESTABLECIMIENTO", "AREA"]]
+
+
+def area_contradice_departamento(df: pd.DataFrame) -> pd.DataFrame:
+    """Busca contradicciones entre AREA y el departamento donde está el establecimiento.
+
+    No es una regla dura: Ciudad Capital tiene zonas periféricas que
+    podrían ser legítimamente rurales, así que esto NO se corrige
+    automáticamente. Pero 12 de 2,161 establecimientos de Ciudad Capital
+    (0.56%) marcados como RURAL son pocos y concentrados, y merecen
+    revisión caso a caso antes de aceptarlos como válidos.
+    """
+    en_capital = df["DEPARTAMENTO"].str.strip().eq("CIUDAD CAPITAL")
+    rural_en_capital = en_capital & df["AREA"].str.strip().eq("RURAL")
+    return df.loc[rural_en_capital, ["CODIGO", "MUNICIPIO", "ESTABLECIMIENTO", "DIRECCION", "AREA"]]
+
+
+def plan_jerarquia_ambigua(df: pd.DataFrame) -> pd.Series:
+    """Detecta la categoría "SEMIPRESENCIAL" sin el detalle de sus hermanas.
+
+    PLAN tiene 13 categorías, pero cuatro de ellas no son alternativas
+    independientes sino una jerarquía incompleta: "SEMIPRESENCIAL (FIN DE
+    SEMANA)", "SEMIPRESENCIAL (UN DÍA A LA SEMANA)" y "SEMIPRESENCIAL (DOS
+    DÍAS A LA SEMANA)" son variantes específicas de la categoría genérica
+    "SEMIPRESENCIAL" (118 filas, 0.99%). No son duplicados de escritura
+    -- las cuatro son grafías correctas y consistentes --, sino una
+    posible pérdida de detalle en la captura: no queda claro si esas 118
+    filas de verdad no tienen sub-tipo o si el dato específico no se
+    registró. Se documenta la ambigüedad; no se reasigna a una subcategoría
+    por adivinanza.
+    """
+    ambiguas = df["PLAN"].str.strip().eq("SEMIPRESENCIAL")
+    return df.loc[ambiguas, "SECTOR"].value_counts()
+
+
+def resumen_calidad_categoricas(df: pd.DataFrame) -> pd.DataFrame:
+    """Consolida los hallazgos anteriores en una tabla, lista para el registro de transformaciones."""
+    filas = [
+        {
+            "variable": "NIVEL", "problema": "Columna constante (un solo valor: DIVERSIFICADO)",
+            "categoria": "sin variabilidad", "cantidad": len(df),
+            "porcentaje": 100.0, "requiere_limpieza": "No",
+            "estrategia_sugerida": "Conservar; documentar en el codebook que viene del filtro de descarga, no aporta variabilidad para el análisis",
+        },
+        {
+            "variable": "JORNADA", "problema": '"SIN JORNADA" es un valor real, no un faltante',
+            "categoria": "dominio", "cantidad": int(df["JORNADA"].str.strip().eq("SIN JORNADA").sum()),
+            "porcentaje": round(df["JORNADA"].str.strip().eq("SIN JORNADA").mean() * 100, 2),
+            "requiere_limpieza": "No", "estrategia_sugerida": "Mantener como categoría; documentar que corresponde a planes semipresenciales/a distancia",
+        },
+        {
+            "variable": "AREA", "problema": '"SIN ESPECIFICAR" es faltante disfrazado de categoría',
+            "categoria": "faltante", "cantidad": int(df["AREA"].str.strip().eq("SIN ESPECIFICAR").sum()),
+            "porcentaje": round(df["AREA"].str.strip().eq("SIN ESPECIFICAR").mean() * 100, 2),
+            "requiere_limpieza": "Si", "estrategia_sugerida": "Reclasificar a NA",
+        },
+        {
+            "variable": "AREA", "problema": "Contradice DEPARTAMENTO (RURAL dentro de Ciudad Capital)",
+            "categoria": "inconsistencia entre variables",
+            "cantidad": int((df["DEPARTAMENTO"].str.strip().eq("CIUDAD CAPITAL") & df["AREA"].str.strip().eq("RURAL")).sum()),
+            "porcentaje": round((df["DEPARTAMENTO"].str.strip().eq("CIUDAD CAPITAL") & df["AREA"].str.strip().eq("RURAL")).mean() * 100, 2),
+            "requiere_limpieza": "Revisar", "estrategia_sugerida": "Revisar caso a caso contra DIRECCION; no corregir automáticamente",
+        },
+        {
+            "variable": "PLAN", "problema": '"SEMIPRESENCIAL" sin el detalle de sus 3 sub-categorías',
+            "categoria": "jerarquía ambigua", "cantidad": int(df["PLAN"].str.strip().eq("SEMIPRESENCIAL").sum()),
+            "porcentaje": round(df["PLAN"].str.strip().eq("SEMIPRESENCIAL").mean() * 100, 2),
+            "requiere_limpieza": "Documentar", "estrategia_sugerida": "Conservar como está; documentar la jerarquía en el codebook, no reasignar por adivinanza",
+        },
+        {
+            "variable": "PLAN", "problema": "Categorías de muy baja frecuencia (posibles typos o casos legítimos raros)",
+            "categoria": "dominio",
+            "cantidad": int(df["PLAN"].str.strip().isin(["IRREGULAR", "INTERCALADO", "MIXTO"]).sum()),
+            "porcentaje": round(df["PLAN"].str.strip().isin(["IRREGULAR", "INTERCALADO", "MIXTO"]).mean() * 100, 2),
+            "requiere_limpieza": "Revisar", "estrategia_sugerida": "Revisar manualmente (2 a 4 registros cada una); conservar si son consistentes con SECTOR/JORNADA",
+        },
+        {
+            "variable": "STATUS", "problema": '"TEMPORAL TITULOS" / "TEMPORAL NOMBRAMIENTO" sin catálogo oficial de referencia',
+            "categoria": "dominio por validar", "cantidad": 110 + 50,
+            "porcentaje": round((110 + 50) / len(df) * 100, 2),
+            "requiere_limpieza": "Validar", "estrategia_sugerida": "Confirmar contra catálogo MINEDUC si está disponible; si no, mantener y documentar como categoría administrativa distinta de CERRADA",
+        },
+        {
+            "variable": "SECTOR/STATUS/MODALIDAD", "problema": "Sin problemas de formato detectados (mayúsculas, espacios, tildes)",
+            "categoria": "formato", "cantidad": 0, "porcentaje": 0.0,
+            "requiere_limpieza": "No", "estrategia_sugerida": "Convertir a tipo categórico (factor) con dominio fijo; validar cardinalidad",
+        },
+    ]
+    return pd.DataFrame(filas)
+
 
 if __name__ == "__main__":
     df = cargar_datos()
     print(f"Registros cargados: {len(df):,}")
     print(f"Columnas totales: {len(df.columns)}")
-    print("Pendiente: completar las secciones por turnos.")
+
+    print("\n=== TURNO 3 · NADISSA: inventario de categóricas ===")
+    print(inventario_categorias(df).to_string(index=False))
+
+    print("\n=== JORNADA = 'SIN JORNADA' por PLAN ===")
+    print(jornada_sin_jornada(df))
+
+    print("\n=== AREA = 'SIN ESPECIFICAR' ===")
+    print(area_sin_especificar(df).to_string(index=False))
+
+    print("\n=== AREA contradice DEPARTAMENTO (RURAL en Ciudad Capital) ===")
+    print(area_contradice_departamento(df).to_string(index=False))
+
+    print("\n=== Resumen de calidad · variables categóricas ===")
+    print(resumen_calidad_categoricas(df).to_string(index=False))

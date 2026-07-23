@@ -16,3 +16,12 @@ SUPERVISOR,"Caracter raro (O/0, tilde grave, apostrofo)",contaminacion,16,0.13,S
 DIRECTOR,Ausencia real (incluye 360 disfrazados que 3.c no vio),faltante,2174,18.28,Si,Convertir disfrazados a NA primero; no imputable,--- | 000000 | SIN DATOS
 DIRECTOR,Variantes por tildes del mismo nombre,duplicado,198,1.67,Si,Fusionar con normalizar_nombre(),VASQUEZ vs VASQUEZ REYES
 DIRECTOR,"Titulo incrustado (LIC., PEM.)",formato,18,0.15,Si,Separar el titulo del nombre,LIC. ELGI WALTER BOTEO GARCIA
+NIVEL,Columna constante (100% DIVERSIFICADO),estructural,11867,99.81,No,"Conservar y documentar: viene del filtro de descarga, no aporta variabilidad",DIVERSIFICADO
+SECTOR,Sin problemas de formato (4 categorias limpias),estructural,0,0.0,No,Convertir a tipo categorico (factor) con dominio fijo,PRIVADO | OFICIAL | COOPERATIVA | MUNICIPAL
+MODALIDAD,Sin problemas de formato (2 categorias limpias),estructural,0,0.0,No,Convertir a tipo categorico binario,MONOLINGUE | BILINGUE
+AREA,"""SIN ESPECIFICAR"" es faltante disfrazado de categoria",faltante,3,0.03,Si,Reclasificar a NA,SIN ESPECIFICAR
+AREA,Contradice DEPARTAMENTO: 12 RURAL en Ciudad Capital (9/12 con respaldo en DIRECCION en zonas 17/18/25; 3/12 sin respaldo en zonas 1/2/7),estructural,12,0.1,Revisar,Revisar caso a caso contra DIRECCION; NO corregir automaticamente,ZONA 17 - ALDEA CANALITOS
+JORNADA,"""SIN JORNADA"" (9.26%) parece faltante pero 96% cruza con PLAN semipresencial/a distancia: es valor real",estructural,1099,9.24,No,Mantener como categoria; documentar el motivo en el codebook,SIN JORNADA
+PLAN,"""SEMIPRESENCIAL"" generico (118) sin el detalle de sus 3 subcategorias especificas",estructural,118,0.99,Documentar,Conservar las 4 categorias; documentar la jerarquia en el codebook,SEMIPRESENCIAL
+PLAN,Categorias de frecuencia muy baja (posible typo o caso real raro),estructural,9,0.08,Revisar,Revisar manualmente contra SECTOR/JORNADA antes de fusionar,IRREGULAR | INTERCALADO | MIXTO
+STATUS,"""TEMPORAL TITULOS""/""TEMPORAL NOMBRAMIENTO"" sin catalogo oficial disponible para validar",estructural,160,1.35,Validar,Mantener; documentar como estado administrativo distinto de CERRADA,TEMPORAL TITULOS
