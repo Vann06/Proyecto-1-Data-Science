@@ -13,8 +13,8 @@ website:
     left:
       - href: index.qmd
         text: Inicio
-      - href: notebooks/proyecto_1.ipynb
-        text: Cuaderno
+      - href: notebooks/01_ingesta_diagnostico_inicial.ipynb
+        text: Diagnóstico inicial
     tools:
       - icon: github
         href: https://github.com/Vann06/Proyecto-1-Data-Science
