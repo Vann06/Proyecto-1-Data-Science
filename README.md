@@ -10,9 +10,9 @@ Obtener, diagnosticar, limpiar y validar los datos de establecimientos educativo
 
 ## Estado actual
 
-Ya se cuenta con los **23 archivos CSV crudos** dentro de `data/raw/`.
+Ya se cuenta con los **23 archivos CSV crudos** dentro de `data/raw/`. Estos archivos corresponden a los 22 departamentos de Guatemala y a una exportación adicional de Ciudad Capital.
 
-La unión de estos archivos se realiza con:
+La unión de los archivos se realiza con:
 
 ```bash
 python src/unir_csv.py
@@ -24,12 +24,19 @@ El resultado se guarda en:
 data/interim/establecimientos_diversificado_raw_unificado.csv
 ```
 
-La unión **no limpia ni corrige los datos**. Solo coloca los archivos uno debajo de otro y agrega:
+La unión no limpia ni corrige los datos. El proceso conserva las 11,890 filas crudas, incluyendo las 23 filas completamente vacías, debido a que estas todavía forman parte del diagnóstico inicial.
 
-- `archivo_origen`: indica de qué CSV salió cada registro.
-- `fila_origen`: indica la fila que tenía en el archivo original.
+De las 11,890 filas:
 
-Las 17 variables originales permanecen sin cambios.
+    - 11,867 contienen información.
+    - 23 están completamente vacías.
+
+El conjunto contiene 17 variables originales. Además, el archivo unificado agrega dos columnas técnicas para mantener la trazabilidad:
+
+archivo_origen: indica de qué archivo CSV proviene el registro.
+fila_origen: indica la posición del registro dentro del archivo original.
+
+Por lo tanto, el archivo unificado contiene 19 columnas en total: 17 variables originales y 2 columnas de trazabilidad.
 
 ## Archivos principales
 

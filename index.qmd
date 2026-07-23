@@ -9,8 +9,9 @@ Este sitio documentará el proceso reproducible de obtención, diagnóstico,
 limpieza y validación de los datos de establecimientos educativos de Guatemala.
 
 ::: {.callout-note}
-El proyecto se encuentra actualmente en su etapa inicial. La estructura está
-preparada, pero todavía no se han descargado ni transformado datos.
+El proyecto se encuentra actualmente en la etapa de diagnóstico inicial.
+Ya se descargaron los 23 archivos CSV crudos y se creó el proceso reproducible
+para unirlos sin modificar sus 17 variables originales.
 :::
 
 ## Entregables previstos
