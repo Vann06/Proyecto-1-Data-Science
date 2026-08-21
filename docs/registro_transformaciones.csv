@@ -1,18 +1,24 @@
-variable,problema_detectado,transformacion,justificacion,responsable
-CODIGO,NINGUNO,"Mantener la variable como texto, validar formato y unicidad. ",,VIANKA
-DISTRITO,"vacios e incompletos?",Convertir las cadenas vacías en valor faltante NA,Nos ayuda a identificar bien la ausencia de información sin inventarnos distritos ,VANKA
-DEPARTAMENTO,hay una separación entre CIUDAD CAPITAL y GUATEMALA,unificar esos y tratarlos ambos como GUATEMALA? ,eliminación de distinción que existe en la fuente ,VIANKA
-MUNICIPIO,NINGUNO?,NINGUNA,no hay nada que nos pueda afectar en el análisis ,VIANKA
-ESTABLECIMIENTO,"algunos vacíos, espacios múltiples, terminan con punto, comillas, tildes, ","Convertir cadenas vacías en valor faltante NA, elminar espacios inicio y al final ",ausencia de información ,VIANKA
-DIRECCION,,,,RICARDO
-TELEFONO,"vacíos, unos tienen 8 dígitos y otros menos, espacios, guiones, comas, dos o más teléfonos (Y), números 0000000,  ","unificar teléfonos con 22222 | 22222 y valor faltante NA, eliminar espacios y carácteres extras",Formato uniforme sin perder datos o números de contacto ,VIANKA
-SUPERVISOR,,,,RICARDO
-DIRECTOR,,,,RICARDO
-NIVEL,,,,RICARDO
-SECTOR,,,,RICARDO
-AREA,,,,RICARDO
-STATUS,,,,NADISSA
-MODALIDAD,,,,NADISSA
-JORNADA,,,,NADISSA
-PLAN,,,,NADISSA
-DEPARTAMENTAL,,,,NADISSA
+variable,problema_detectado,transformacion,registros_afectados,justificacion,responsable
+CODIGO,"Riesgo de perder ceros y formato si se interpreta como número","Conservar como texto; agregar banderas de formato y duplicación",0,"Es un identificador y los 11867 códigos no vacíos ya son válidos y únicos",VIANKA
+DISTRITO,"Cadenas vacías y ausencia de información","Convertir cadenas vacías y marcadores exactos a NA",555,"Representa el faltante de forma uniforme sin inventar un distrito",VIANKA
+DISTRITO,"Códigos incompletos que terminan en guion","Conservar el valor y marcar DISTRITO_INCOMPLETO y DISTRITO_REQUIERE_REVISION",70,"No existe evidencia suficiente para completar los dígitos automáticamente",VIANKA
+DISTRITO,"Coexisten dos formatos completos","Clasificar el formato y conservar NN-NNN y NN-NN-NNNN",11335,"La longitud no demuestra que uno de los esquemas sea inválido",VIANKA
+DEPARTAMENTO,"Mayúsculas, tildes omitidas y categoría especial CIUDAD CAPITAL","Aplicar el catálogo oficial; asignar CIUDAD CAPITAL a Guatemala",11867,"Deja la variable en el dominio de 22 departamentos y la zona se conserva aparte",VIANKA
+MUNICIPIO,"Mayúsculas, tildes omitidas y zonas almacenadas como municipio","Normalizar la escritura; asignar Guatemala en filas capitalinas",11867,"Corrige el nivel geográfico sin usar coincidencia aproximada",VIANKA
+MUNICIPIO,"Error ortográfico PACHALUN para el código municipal 14-21","Corregir a Pachalum",18,"El nombre canónico se determina por el código y catálogo municipal",VIANKA
+ZONA_CAPITAL,"La zona capitalina estaba almacenada en MUNICIPIO","Extraer ZONA N a una variable derivada",2161,"Preserva la sububicación original después de asignar MUNICIPIO = Guatemala",VIANKA
+DEPARTAMENTAL,"Mayúsculas y tildes inconsistentes","Aplicar un catálogo administrativo independiente de 26 categorías",11867,"Conserva Norte, Sur, Oriente, Occidente y Quiché Norte sin igualar variables distintas",VIANKA
+CODIGO/DEPARTAMENTO/MUNICIPIO,"Posibles contradicciones entre el código y la geografía","Agregar banderas de consistencia por prefijo",0,"No se encontraron contradicciones ni prefijos asociados con varios municipios",VIANKA
+CODIGO/DISTRITO/DEPARTAMENTO/MUNICIPIO/DEPARTAMENTAL,"Posibles duplicados exactos","Agregar DUPLICADO_EXACTO_VIANKA sin eliminar filas",0,"CODIGO es único y no se detectaron coincidencias exactas completas",VIANKA
+ESTABLECIMIENTO,,,,,RICARDO
+DIRECCION,,,,,RICARDO
+TELEFONO,,,,,RICARDO
+SUPERVISOR,,,,,RICARDO
+DIRECTOR,,,,,RICARDO
+NIVEL,,,,,NADISSA
+SECTOR,,,,,NADISSA
+AREA,,,,,NADISSA
+STATUS,,,,,NADISSA
+MODALIDAD,,,,,NADISSA
+JORNADA,,,,,NADISSA
+PLAN,,,,,NADISSA

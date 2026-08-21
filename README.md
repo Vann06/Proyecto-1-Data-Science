@@ -44,6 +44,7 @@ Por lo tanto, el archivo unificado contiene 19 columnas en total: 17 variables o
 data/raw/                              23 CSV originales; nunca se editan
 data/interim/                          archivo unificado generado por código
 notebooks/01_ingesta_diagnostico_inicial.ipynb
+notebooks/03_limpieza_datos_turno1_vianka.ipynb
 src/unir_csv.py                        unión de los 23 CSV
 src/diagnostico.py                     diagnóstico inicial
 src/limpieza.py                        limpieza aprobada

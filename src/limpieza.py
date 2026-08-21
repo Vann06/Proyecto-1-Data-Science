@@ -18,6 +18,19 @@ from src.diagnostico import (
     separar_numeros,
     sin_tildes,
 )
+from src.catalogos_geograficos import (
+    DEPARTAMENTALES_CANONICAS,
+    DEPARTAMENTOS_POR_CODIGO,
+    PATRON_CODIGO,
+    PATRON_DISTRITO_CORTO,
+    PATRON_DISTRITO_EXTENDIDO,
+    PATRON_DISTRITO_INCOMPLETO,
+    PATRON_ZONA,
+    VARIABLES_VIANKA,
+    clave_comparacion,
+    limpiar_celda_texto,
+    nombre_geografico,
+)
 
 
 def limpiar_datos_preliminar(df: pd.DataFrame) -> pd.DataFrame:
@@ -28,8 +41,15 @@ def limpiar_datos_preliminar(df: pd.DataFrame) -> pd.DataFrame:
     # ============================================================
     # TURNO 1 · VIANKA
     # CODIGO, DISTRITO, DEPARTAMENTO, MUNICIPIO, DEPARTAMENTAL
-    # Agregar aquí solo las reglas previamente aprobadas.
+    # Los valores originales se conservan y los casos dudosos se marcan.
     # ============================================================
+
+    limpio_pre = limpiar_codigo(limpio_pre)
+    limpio_pre = limpiar_distrito(limpio_pre)
+    limpio_pre = limpiar_departamento(limpio_pre)
+    limpio_pre = limpiar_municipio(limpio_pre)
+    limpio_pre = limpiar_departamental(limpio_pre)
+    limpio_pre = marcar_consistencia_geografica(limpio_pre)
 
     # ============================================================
     # TURNO 2 · RICARDO
@@ -50,6 +70,133 @@ def limpiar_datos_preliminar(df: pd.DataFrame) -> pd.DataFrame:
     # ============================================================
 
     return limpio_pre
+
+
+# ================================================================
+# TURNO 1 · VIANKA — funciones de limpieza
+# ================================================================
+
+
+def limpiar_codigo(df: pd.DataFrame) -> pd.DataFrame:
+    """Conserva CODIGO como texto y agrega controles; no reconstruye valores."""
+    df = df.copy()
+    df["CODIGO_ORIGINAL"] = df["CODIGO"]
+    codigo = df["CODIGO"].map(limpiar_celda_texto).astype("string")
+    df["CODIGO"] = codigo
+    df["CODIGO_FORMATO_VALIDO"] = codigo.str.fullmatch(PATRON_CODIGO).fillna(False)
+    df["CODIGO_DUPLICADO"] = codigo.notna() & codigo.duplicated(keep=False)
+    return df
+
+
+def limpiar_distrito(df: pd.DataFrame) -> pd.DataFrame:
+    """Unifica faltantes y clasifica DISTRITO sin completar códigos parciales."""
+    df = df.copy()
+    df["DISTRITO_ORIGINAL"] = df["DISTRITO"]
+    distrito = df["DISTRITO"].map(limpiar_celda_texto).astype("string")
+    corto = distrito.str.fullmatch(PATRON_DISTRITO_CORTO).fillna(False)
+    extendido = distrito.str.fullmatch(PATRON_DISTRITO_EXTENDIDO).fillna(False)
+    incompleto = distrito.str.fullmatch(PATRON_DISTRITO_INCOMPLETO).fillna(False)
+
+    formato = pd.Series("otro", index=df.index, dtype="string")
+    formato.loc[distrito.isna()] = "faltante"
+    formato.loc[corto] = "corto NN-NNN"
+    formato.loc[extendido] = "extendido NN-NN-NNNN"
+    formato.loc[incompleto] = "incompleto NN-"
+
+    df["DISTRITO"] = distrito
+    df["DISTRITO_FORMATO"] = formato
+    df["DISTRITO_INCOMPLETO"] = incompleto
+    df["DISTRITO_FORMATO_VALIDO"] = corto | extendido
+    df["DISTRITO_REQUIERE_REVISION"] = incompleto | formato.eq("otro")
+    return df
+
+
+def limpiar_departamento(df: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza DEPARTAMENTO al catálogo oficial y preserva el valor crudo."""
+    df = df.copy()
+    df["DEPARTAMENTO_ORIGINAL"] = df["DEPARTAMENTO"]
+    original_limpio = df["DEPARTAMENTO"].map(limpiar_celda_texto).astype("string")
+    clave = original_limpio.map(clave_comparacion)
+    catalogo = {
+        clave_comparacion(nombre): nombre
+        for nombre in DEPARTAMENTOS_POR_CODIGO.values()
+    }
+    catalogo["CIUDAD CAPITAL"] = "Guatemala"
+    normalizado = clave.map(catalogo).astype("string")
+
+    df["DEPARTAMENTO"] = normalizado.fillna(original_limpio)
+    df["DEPARTAMENTO_FUERA_CATALOGO"] = original_limpio.notna() & normalizado.isna()
+    df["DEPARTAMENTO_ES_CIUDAD_CAPITAL"] = clave.eq("CIUDAD CAPITAL")
+    return df
+
+
+def limpiar_municipio(df: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza MUNICIPIO y separa la zona de los registros capitalinos."""
+    df = df.copy()
+    df["MUNICIPIO_ORIGINAL"] = df["MUNICIPIO"]
+    municipio_original = df["MUNICIPIO"].map(limpiar_celda_texto).astype("string")
+    departamento_original = df["DEPARTAMENTO_ORIGINAL"].map(clave_comparacion)
+    es_capital = departamento_original.eq("CIUDAD CAPITAL")
+    zona = municipio_original.fillna("").str.extract(PATRON_ZONA, expand=False)
+
+    df["ZONA_CAPITAL"] = pd.Series(pd.NA, index=df.index, dtype="string")
+    con_zona = es_capital & zona.notna()
+    df.loc[con_zona, "ZONA_CAPITAL"] = "Zona " + zona[con_zona]
+
+    municipio = municipio_original.map(nombre_geografico).astype("string")
+    municipio.loc[es_capital] = "Guatemala"
+    df["MUNICIPIO"] = municipio
+    df["MUNICIPIO_ZONA_INVALIDA"] = es_capital & zona.isna()
+    df["MUNICIPIO_CORREGIDO_CATALOGO"] = (
+        municipio_original.notna()
+        & municipio.notna()
+        & municipio_original.ne(municipio)
+    )
+    return df
+
+
+def limpiar_departamental(df: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza DEPARTAMENTAL con su dominio administrativo independiente."""
+    df = df.copy()
+    df["DEPARTAMENTAL_ORIGINAL"] = df["DEPARTAMENTAL"]
+    original_limpio = df["DEPARTAMENTAL"].map(limpiar_celda_texto).astype("string")
+    clave = original_limpio.map(clave_comparacion)
+    normalizada = clave.map(DEPARTAMENTALES_CANONICAS).astype("string")
+    df["DEPARTAMENTAL"] = normalizada.fillna(original_limpio)
+    df["DEPARTAMENTAL_FUERA_CATALOGO"] = original_limpio.notna() & normalizada.isna()
+    return df
+
+
+def marcar_consistencia_geografica(df: pd.DataFrame) -> pd.DataFrame:
+    """Marca contradicciones, prefijos ambiguos y duplicados; no elimina filas."""
+    df = df.copy()
+    codigo = df["CODIGO"].fillna("")
+    prefijo_departamento = codigo.str.slice(0, 2)
+    esperado = prefijo_departamento.map(DEPARTAMENTOS_POR_CODIGO)
+    esperado.loc[prefijo_departamento.eq("00")] = "Guatemala"
+
+    consistente = pd.Series(pd.NA, index=df.index, dtype="boolean")
+    comparable = esperado.notna() & df["DEPARTAMENTO"].notna()
+    consistente.loc[comparable] = df.loc[comparable, "DEPARTAMENTO"].eq(
+        esperado.loc[comparable]
+    )
+    df["CODIGO_DEPARTAMENTO_CONSISTENTE"] = consistente
+
+    prefijo_municipio = codigo.str.slice(0, 5)
+    municipios_por_prefijo = (
+        pd.DataFrame({"prefijo": prefijo_municipio, "municipio": df["MUNICIPIO"]})
+        .loc[codigo.ne("")]
+        .groupby("prefijo")["municipio"]
+        .nunique()
+    )
+    ambiguos = set(municipios_por_prefijo[municipios_por_prefijo > 1].index)
+    df["PREFIJO_CODIGO_AMBIGUO"] = codigo.ne("") & prefijo_municipio.isin(ambiguos)
+
+    completo = df[VARIABLES_VIANKA].notna().all(axis=1)
+    df["DUPLICADO_EXACTO_VIANKA"] = completo & df[VARIABLES_VIANKA].duplicated(
+        keep=False
+    )
+    return df
 
 
 # ================================================================
@@ -81,7 +228,10 @@ def marcar_duplicados_establecimiento(df: pd.DataFrame) -> pd.DataFrame:
     clave = nombre.map(normalizar_nombre)
     df["ESTABLECIMIENTO_CLAVE"] = clave
 
-    municipio = df["MUNICIPIO"].fillna("").str.strip()
+    columna_municipio = (
+        "MUNICIPIO_ORIGINAL" if "MUNICIPIO_ORIGINAL" in df.columns else "MUNICIPIO"
+    )
+    municipio = df[columna_municipio].fillna("").str.strip()
     grupo = clave + "||" + municipio
     con_clave = clave.ne("")
 
@@ -166,7 +316,10 @@ def limpiar_direccion(df: pd.DataFrame) -> pd.DataFrame:
     df["DIRECCION_ORIGINAL"] = df["DIRECCION"]
 
     direccion = df["DIRECCION"].fillna("").str.strip()
-    municipio = df["MUNICIPIO"].fillna("").str.strip()
+    columna_municipio = (
+        "MUNICIPIO_ORIGINAL" if "MUNICIPIO_ORIGINAL" in df.columns else "MUNICIPIO"
+    )
+    municipio = df[columna_municipio].fillna("").str.strip()
 
     # 1) faltante disfrazado: vacía o igual al municipio (sin_tildes + strip)
     dn = direccion.map(sin_tildes)
@@ -337,7 +490,10 @@ def limpiar_director(df: pd.DataFrame) -> pd.DataFrame:
     texto = texto.str.replace(_TITULO, "", regex=True).str.strip()
 
     ausente = _mascara_ausente(texto)
-    municipio = df["MUNICIPIO"].fillna("").str.strip()
+    columna_municipio = (
+        "MUNICIPIO_ORIGINAL" if "MUNICIPIO_ORIGINAL" in df.columns else "MUNICIPIO"
+    )
+    municipio = df[columna_municipio].fillna("").str.strip()
     texto = _fusionar_variantes(texto, municipio)
     texto = texto.mask(ausente, pd.NA)
 
