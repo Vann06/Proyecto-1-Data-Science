@@ -21,15 +21,15 @@ Los tres integrantes completan este mismo archivo por turnos. Cada persona actua
 | Ricardo | TELEFONO | Teléfono de contacto | Texto | Formato que apruebe el equipo | Pendiente |
 | Ricardo | SUPERVISOR | Nombre del supervisor | Texto | Nombre con formato uniforme | Pendiente |
 | Ricardo | DIRECTOR | Nombre del director | Texto | Nombre con formato uniforme | Pendiente |
-| Nadissa | NIVEL | Nivel educativo | Texto categórico | DIVERSIFICADO | Pendiente |
-| Nadissa | SECTOR | Sector del establecimiento | Texto categórico | Categorías observadas y aprobadas | Pendiente |
-| Nadissa | AREA | Área geográfica | Texto categórico | Categorías observadas y aprobadas | Pendiente |
-| Nadissa | STATUS | Estado del establecimiento | Texto categórico | Categorías observadas y aprobadas | Pendiente |
-| Nadissa | MODALIDAD | Modalidad educativa | Texto categórico | Categorías observadas y aprobadas | Pendiente |
-| Nadissa | JORNADA | Jornada de atención | Texto categórico | Categorías observadas y aprobadas | Pendiente |
-| Nadissa | PLAN | Plan educativo | Texto categórico | Categorías observadas y aprobadas | Pendiente |
+| Nadissa | NIVEL | Nivel educativo; constante por el filtro de extracción | Categórico | `DIVERSIFICADO` | Se conserva como metadato del filtro y se fija el dominio. |
+| Nadissa | SECTOR | Sector del establecimiento | Categórico | `PRIVADO`, `OFICIAL`, `COOPERATIVA`, `MUNICIPAL` | Se convierte a categórico; no se modifican valores. |
+| Nadissa | AREA | Área geográfica | Categórico anulable | `URBANA`, `RURAL`, `NA` | `SIN ESPECIFICAR` se reclasifica a `NA`. Encontré establecimientos con direcciones de la Ciudad Capitaly decidi realizar una validación manual; busqué los establecimientos segun sus códigos, nombres y dirección, coincidieron exactamente y confirme que pertenecen al área rural. |
+| Nadissa | STATUS | Estado del establecimiento | Categórico | `ABIERTA`, `CERRADA TEMPORALMENTE`, `CERRADA DEFINITIVAMENTE`, `TEMPORAL TITULOS`, `TEMPORAL NOMBRAMIENTO` | Se preservan los estados temporales como categorías administrativas distintas. |
+| Nadissa | MODALIDAD | Modalidad educativa | Categórico | `MONOLINGUE`, `BILINGUE` | Se convierte a categórico binario; no se modifican valores. |
+| Nadissa | JORNADA | Jornada de atención | Categórico | `DOBLE`, `VESPERTINA`, `MATUTINA`, `SIN JORNADA`, `NOCTURNA`, `INTERMEDIA` | `SIN JORNADA` se conserva como categoría válida para ofertas sin horario fijo. |
+| Nadissa | PLAN | Plan educativo | Categórico | 13 categorías observadas | Se preservan la categoría genérica `SEMIPRESENCIAL`, sus variantes y las categorías poco frecuentes ya revisadas. |
 
-## Columnas derivadas y de trazabilidad — turno 1
+## Columnas derivadas y de trazabilidad - turno 1
 
 Estas columnas permiten auditar la limpieza sin eliminar ni reconstruir casos
 dudosos. Las columnas `_ORIGINAL` conservan exactamente el valor de entrada.
