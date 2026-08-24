@@ -6,6 +6,21 @@ Cada persona agrega pruebas para sus variables, siguiendo el mismo orden.
 
 import pandas as pd
 
+from src.limpieza import CATEGORIAS_NADISSA
+
+
+def validar_categorias_nadissa(df: pd.DataFrame) -> None:
+    """Comprueba tipo, dominio y decisiones de limpieza categoricas."""
+    for columna, dominio in CATEGORIAS_NADISSA.items():
+        if not isinstance(df[columna].dtype, pd.CategoricalDtype):
+            raise AssertionError(f"{columna} debe tener tipo categorico.")
+        if not set(df[columna].dropna().astype("string")).issubset(dominio):
+            raise AssertionError(f"{columna} contiene valores fuera del dominio aprobado.")
+    if df["AREA"].astype("string").eq("SIN ESPECIFICAR").any():
+        raise AssertionError("AREA no debe conservar SIN ESPECIFICAR.")
+    if df["JORNADA"].astype("string").eq("SIN JORNADA").sum() == 0:
+        raise AssertionError("JORNADA debe conservar SIN JORNADA.")
+
 
 def validar_datos(df: pd.DataFrame) -> None:
     """Ejecutará las reglas de calidad definidas por el equipo."""
