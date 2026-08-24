@@ -69,7 +69,40 @@ def limpiar_datos_preliminar(df: pd.DataFrame) -> pd.DataFrame:
     # Agregar aquí solo las reglas previamente aprobadas.
     # ============================================================
 
+    limpio_pre = limpiar_categorias_nadissa(limpio_pre)
     return limpio_pre
+
+
+# ================================================================
+# TURNO 3 - NADISSA - variables categoricas
+# ================================================================
+
+
+CATEGORIAS_NADISSA = {
+    "NIVEL": ["DIVERSIFICADO"],
+    "SECTOR": ["PRIVADO", "OFICIAL", "COOPERATIVA", "MUNICIPAL"],
+    "AREA": ["URBANA", "RURAL"],
+    "STATUS": ["ABIERTA", "CERRADA TEMPORALMENTE", "CERRADA DEFINITIVAMENTE", "TEMPORAL TITULOS", "TEMPORAL NOMBRAMIENTO"],
+    "MODALIDAD": ["MONOLINGUE", "BILINGUE"],
+    "JORNADA": ["DOBLE", "VESPERTINA", "MATUTINA", "SIN JORNADA", "NOCTURNA", "INTERMEDIA"],
+    "PLAN": ["DIARIO(REGULAR)", "FIN DE SEMANA", "SEMIPRESENCIAL (FIN DE SEMANA)", "SEMIPRESENCIAL (UN D\u00cdA A LA SEMANA)", "A DISTANCIA", "SEMIPRESENCIAL", "VIRTUAL A DISTANCIA", "SEMIPRESENCIAL (DOS D\u00cdAS A LA SEMANA)", "SABATINO", "DOMINICAL", "MIXTO", "IRREGULAR", "INTERCALADO"],
+}
+
+
+def limpiar_categorias_nadissa(df: pd.DataFrame) -> pd.DataFrame:
+    """Reclasifica el faltante de AREA y fija dominios categoricos aprobados."""
+    df = df.copy()
+    for columna, dominio in CATEGORIAS_NADISSA.items():
+        texto = df[columna].astype("string").str.strip().replace("", pd.NA)
+        if columna == "AREA":
+            texto = texto.mask(texto.eq("SIN ESPECIFICAR"), pd.NA)
+        fuera_dominio = texto.dropna()[~texto.dropna().isin(dominio)].unique()
+        if len(fuera_dominio):
+            valores = ", ".join(map(str, fuera_dominio))
+            raise ValueError(f"{columna} contiene categorias no aprobadas: {valores}.")
+        df[columna] = texto.astype(pd.CategoricalDtype(categories=dominio))
+
+    return df
 
 
 # ================================================================
