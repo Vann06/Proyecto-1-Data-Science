@@ -1,9 +1,5 @@
 # Revisión de cumplimiento del Proyecto 1
 
-**Referencia revisada:** guía “Proyecto 1. Obtención y Limpieza de los datos”,
-CC3084, semestre II de 2026.  
-**Fecha de revisión:** 25 de agosto de 2026.
-
 ## Resultado general
 
 El repositorio contiene una base sólida de ingesta, diagnóstico, plan y
@@ -37,7 +33,7 @@ incompleta.
 3. Completar `src/validacion.py` y `tests/test_calidad.py` con pruebas de
    duplicados, espacios, teléfonos, catálogos, tipos, categorías y todos los
    errores detectados inicialmente.
-4. Completar `docs/registro_transformaciones.csv` para Ricardo y Nadissa. La
+4. Completar `docs/registro_transformaciones.csv`. La
    cantidad afectada debe salir del código, no escribirse a mano sin respaldo.
 5. Resolver los 70 distritos incompletos o definirlos como faltantes/revisión
    aceptada con evidencia institucional. Mientras permanezcan, no puede
@@ -49,30 +45,3 @@ incompleta.
    catálogo correspondiente.
 8. Alinear el dominio de teléfonos: el plan habla de 8 dígitos y el código
    acepta 7 u 8. Hay 90 celdas limpias con al menos un número de 7 dígitos.
-9. Corregir documentación desactualizada: `README.md` e `index.qmd` aún dicen
-   que el proyecto está en diagnóstico, aunque ya existe limpieza preliminar.
-10. Confirmar la fecha exacta de extracción y actualizar versión, fuente y
-    tratamientos en el libro de códigos antes de exportarlo a PDF.
-
-## Revisión del codebook de ejemplo
-
-El archivo de ejemplo descargado pertenece a un proyecto de clasificación de
-imágenes de cartas TCG. Su tema, variables, clases, fuentes y decisiones de
-modelado no son reutilizables en este proyecto. Sí sirve como referencia de
-presentación porque comienza con el propósito del dataset, enumera dominios y
-explica transformaciones.
-
-Para este proyecto, la guía exige mucho más detalle por cada variable:
-descripción, tipo, dominio, valores posibles, tratamiento aplicado, variables
-derivadas, fecha de extracción, fuente y versión del conjunto limpio. Por eso,
-el ejemplo no debe copiarse como plantilla completa. El `docs/codebook.md` del
-repositorio está mejor orientado, pero debe actualizarse con:
-
-- la fecha exacta de extracción;
-- la versión final del conjunto;
-- los tratamientos reales de `ESTABLECIMIENTO`, `DIRECCION`, `TELEFONO`,
-  `SUPERVISOR` y `DIRECTOR`;
-- todas las columnas derivadas y su fórmula;
-- la decisión sobre columnas técnicas y de auditoría;
-- dominios completos o referencias a catálogos versionados;
-- un historial que corresponda al CSV final.
