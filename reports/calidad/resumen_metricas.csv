@@ -1,11 +1,11 @@
 ﻿metrica,antes,despues_actual,observacion
-Registros,11890,11890,Se conservan 23 filas completamente vacías.
-Variables sustantivas,17,17,El DataFrame limpio tiene 48 columnas físicas por trazabilidad y auditoría.
-Valores faltantes,4217 (2.09%),4838 (2.39%),El aumento se debe a la reclasificación de faltantes disfrazados; no es pérdida de datos.
-Variables con faltantes,17,17,Las filas vacías afectan a las 17 variables.
-Duplicados exactos,23,23,Filas participantes; equivalen a 22 copias adicionales de una fila vacía.
+Registros,11890,11867,Se retiraron las 23 filas completamente vacías.
+Variables,17,18,Se agregó ZONA_CAPITAL como variable derivada.
+Valores faltantes,4217 (2.09%),4447 (2.20%),La comparación de faltantes usa las 17 variables originales en ambos estados.
+Variables con faltantes,17,7,"Después de retirar filas vacías, siete variables conservan faltantes reales."
+Duplicados exactos,23,0,Las 23 filas participantes antes eran filas vacías; no quedan duplicados exactos.
 Posibles duplicados,4045,42,"4,045 candidatas; 42 confirmadas en 21 grupos; ninguna resuelta todavía."
-Variables con formato inconsistente,9,5,Quedan DISTRITO y espacios múltiples en cuatro variables de texto.
+Variables con formato inconsistente,9,1,Solo DISTRITO conserva 70 formatos incompletos pendientes de revisión.
 Variables con tipo incorrecto,7,0,Las siete categóricas quedan con dtype category en memoria; el CSV requerirá un esquema de carga.
 Categorías inconsistentes,Pendiente de consolidar,Pendiente de validar,Falta acordar una regla de conteo y validar MUNICIPIO contra un catálogo oficial completo.
-Celdas modificadas,0,41164,No equivale a errores distintos: una celda se cuenta una vez aunque reciba varias operaciones.
+Celdas modificadas,0,43901,No equivale a errores distintos: una celda se cuenta una vez aunque reciba varias operaciones.
