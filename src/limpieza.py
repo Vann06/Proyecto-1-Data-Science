@@ -33,6 +33,63 @@ from src.catalogos_geograficos import (
 )
 
 
+VARIABLES_ORIGINALES = [
+    "CODIGO",
+    "DISTRITO",
+    "DEPARTAMENTO",
+    "MUNICIPIO",
+    "ESTABLECIMIENTO",
+    "DIRECCION",
+    "TELEFONO",
+    "SUPERVISOR",
+    "DIRECTOR",
+    "NIVEL",
+    "SECTOR",
+    "AREA",
+    "STATUS",
+    "MODALIDAD",
+    "JORNADA",
+    "PLAN",
+    "DEPARTAMENTAL",
+]
+
+COLUMNAS_FINALES = [
+    "CODIGO",
+    "DISTRITO",
+    "DEPARTAMENTO",
+    "MUNICIPIO",
+    "ZONA_CAPITAL",
+    "ESTABLECIMIENTO",
+    "DIRECCION",
+    "TELEFONO",
+    "SUPERVISOR",
+    "DIRECTOR",
+    "NIVEL",
+    "SECTOR",
+    "AREA",
+    "STATUS",
+    "MODALIDAD",
+    "JORNADA",
+    "PLAN",
+    "DEPARTAMENTAL",
+]
+
+
+def filas_completamente_vacias(df: pd.DataFrame) -> pd.Series:
+    """Identifica filas vacías en las 17 variables recibidas de la fuente."""
+    faltantes = pd.DataFrame(index=df.index)
+    for columna in VARIABLES_ORIGINALES:
+        texto = df[columna].astype("string")
+        faltantes[columna] = texto.isna() | texto.str.strip().eq("")
+    return faltantes.all(axis=1)
+
+
+def normalizar_espacios(serie: pd.Series) -> pd.Series:
+    """Colapsa espacios internos, recorta extremos y conserva los valores NA."""
+    texto = serie.astype("string").str.replace(r"\s+", " ", regex=True).str.strip()
+    return texto.mask(texto.eq(""), pd.NA)
+
+
 def limpiar_datos_preliminar(df: pd.DataFrame) -> pd.DataFrame:
     """Aplicará únicamente las reglas aprobadas en el plan de limpieza."""
 
@@ -71,6 +128,14 @@ def limpiar_datos_preliminar(df: pd.DataFrame) -> pd.DataFrame:
 
     limpio_pre = limpiar_categorias_nadissa(limpio_pre)
     return limpio_pre
+
+
+def generar_conjunto_limpio(df: pd.DataFrame) -> pd.DataFrame:
+    """Aplica la limpieza y devuelve el esquema analítico de 18 variables."""
+    mascara_vacia = filas_completamente_vacias(df)
+    limpio = limpiar_datos_preliminar(df)
+    final = limpio.loc[~mascara_vacia, COLUMNAS_FINALES].copy()
+    return final.reset_index(drop=True)
 
 
 # ================================================================
@@ -257,7 +322,10 @@ def marcar_duplicados_establecimiento(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
-    nombre = df["ESTABLECIMIENTO"].fillna("").str.strip()
+    df["ESTABLECIMIENTO_ORIGINAL"] = df["ESTABLECIMIENTO"]
+    df["ESTABLECIMIENTO"] = normalizar_espacios(df["ESTABLECIMIENTO"])
+    nombre = df["ESTABLECIMIENTO"].fillna("")
+    nombre_original = df["ESTABLECIMIENTO_ORIGINAL"].fillna("").str.strip()
     clave = nombre.map(normalizar_nombre)
     df["ESTABLECIMIENTO_CLAVE"] = clave
 
@@ -268,7 +336,10 @@ def marcar_duplicados_establecimiento(df: pd.DataFrame) -> pd.DataFrame:
     grupo = clave + "||" + municipio
     con_clave = clave.ne("")
 
-    escrituras = pd.DataFrame({"grupo": grupo, "nombre": nombre})[con_clave]
+    escrituras = pd.DataFrame({
+        "grupo": grupo,
+        "nombre": nombre_original,
+    })[con_clave]
     escrituras_por_grupo = escrituras.groupby("grupo")["nombre"].nunique()
     claves_duplicadas = escrituras_por_grupo[escrituras_por_grupo > 1].index
     pertenece = con_clave & grupo.isin(claves_duplicadas)
@@ -348,7 +419,7 @@ def limpiar_direccion(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["DIRECCION_ORIGINAL"] = df["DIRECCION"]
 
-    direccion = df["DIRECCION"].fillna("").str.strip()
+    direccion = normalizar_espacios(df["DIRECCION"]).fillna("")
     columna_municipio = (
         "MUNICIPIO_ORIGINAL" if "MUNICIPIO_ORIGINAL" in df.columns else "MUNICIPIO"
     )
@@ -482,7 +553,9 @@ def limpiar_supervisor(df: pd.DataFrame) -> pd.DataFrame:
     df["SUPERVISOR_ORIGINAL"] = df["SUPERVISOR"]
 
     distrito = df["DISTRITO"].fillna("").str.strip()
-    texto = df["SUPERVISOR"].fillna("").str.strip().map(_corregir_contaminacion_nombre)
+    texto = normalizar_espacios(df["SUPERVISOR"]).fillna("").map(
+        _corregir_contaminacion_nombre
+    )
     texto = _fusionar_variantes(texto, distrito)
 
     ausente = _mascara_ausente(texto)
@@ -518,7 +591,7 @@ def limpiar_director(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["DIRECTOR_ORIGINAL"] = df["DIRECTOR"]
 
-    texto = df["DIRECTOR"].fillna("").str.strip()
+    texto = normalizar_espacios(df["DIRECTOR"]).fillna("")
     titulo = texto.str.extract(_TITULO, expand=False)
     texto = texto.str.replace(_TITULO, "", regex=True).str.strip()
 
