@@ -94,7 +94,9 @@ No se trabajará en paralelo sobre los mismos archivos. Cada persona termina su 
 2. Cuando termine y suba sus cambios, avisa a **Ricardo**.
 3. Ricardo ejecuta `git pull`, continúa el mismo archivo y sube su parte.
 4. Ricardo avisa a **Nadissa**.
-5. Nadissa ejecuta `git pull`, completa su parte y revisa que la fase esté terminada.
+5. Nadissa ejecuta `git pull`, completa su parte y sube sus cambios.
+6. Nadissa avisa a **Nina**.
+7. Nina ejecuta `git pull` y realiza la revisión de QA antes de cerrar la fase.
 
 Este mismo orden se repite en cada fase: diagnóstico, plan de limpieza, limpieza, validación y documentación final.
 
@@ -105,6 +107,7 @@ Este mismo orden se repite en cada fase: diagnóstico, plan de limpieza, limpiez
 | **Vianka** | `CODIGO`, `DISTRITO`, `DEPARTAMENTO`, `MUNICIPIO`, `DEPARTAMENTAL` | Verificar la unión y la consistencia geográfica |
 | **Ricardo** | `ESTABLECIMIENTO`, `DIRECCION`, `TELEFONO`, `SUPERVISOR`, `DIRECTOR` | Revisar formatos de texto y duplicados exactos o parciales |
 | **Nadissa** | `NIVEL`, `SECTOR`, `AREA`, `STATUS`, `MODALIDAD`, `JORNADA`, `PLAN` | Revisar categorías y consolidar el resultado de cada fase |
+| **Nina** | Todas las variables (QA) | Revisar la calidad del conjunto, validar las métricas, ejecutar las pruebas y verificar la documentación final |
 
 ## Fases del proyecto
 
