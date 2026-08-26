@@ -9,9 +9,9 @@ Este sitio documentará el proceso reproducible de obtención, diagnóstico,
 limpieza y validación de los datos de establecimientos educativos de Guatemala.
 
 ::: {.callout-note}
-El proyecto se encuentra actualmente en la etapa de diagnóstico inicial.
-Ya se descargaron los 23 archivos CSV crudos y se creó el proceso reproducible
-para unirlos sin modificar sus 17 variables originales.
+El proyecto cuenta con ingesta, diagnóstico, limpieza, generación del conjunto
+procesado, métricas comparativas y pruebas automáticas reproducibles. Los casos
+que requieren revisión manual permanecen documentados en el informe de calidad.
 :::
 
 ## Entregables previstos
@@ -20,7 +20,7 @@ para unirlos sin modificar sus 17 variables originales.
 - Datos crudos en formato CSV.
 - Diagnóstico inicial.
 - Plan y registro de limpieza.
-- Pruebas automáticas.
-- Informe de calidad.
-- Libro de códigos.
-- Un único conjunto de datos limpio.
+- Pruebas automáticas implementadas.
+- Informe de calidad con métricas reproducibles.
+- Libro de códigos actualizado.
+- Un conjunto procesado de 11,867 registros y 18 variables.

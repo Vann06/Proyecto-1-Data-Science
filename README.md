@@ -10,7 +10,10 @@ Obtener, diagnosticar, limpiar y validar los datos de establecimientos educativo
 
 ## Estado actual
 
-Ya se cuenta con los **23 archivos CSV crudos** dentro de `data/raw/`. Estos archivos corresponden a los 22 departamentos de Guatemala y a una exportación adicional de Ciudad Capital.
+Ya se cuenta con los **23 archivos CSV crudos**, el diagnóstico, el plan de
+limpieza, la limpieza automatizada, las validaciones y el informe de calidad.
+Los archivos crudos corresponden a los 22 departamentos de Guatemala y a una
+exportación adicional de Ciudad Capital.
 
 La unión de los archivos se realiza con:
 
@@ -24,7 +27,9 @@ El resultado se guarda en:
 data/interim/establecimientos_diversificado_raw_unificado.csv
 ```
 
-La unión no limpia ni corrige los datos. El proceso conserva las 11,890 filas crudas, incluyendo las 23 filas completamente vacías, debido a que estas todavía forman parte del diagnóstico inicial.
+La unión no limpia ni corrige los datos. El proceso conserva las 11,890 filas
+crudas, incluyendo las 23 filas completamente vacías, para que formen parte del
+diagnóstico inicial.
 
 De las 11,890 filas:
 
@@ -38,6 +43,25 @@ fila_origen: indica la posición del registro dentro del archivo original.
 
 Por lo tanto, el archivo unificado contiene 19 columnas en total: 17 variables originales y 2 columnas de trazabilidad.
 
+El conjunto procesado se genera y valida con:
+
+```bash
+python src/generar_dataset.py
+python src/metricas_calidad.py
+python -m pytest -q
+```
+
+La salida queda en:
+
+```text
+data/processed/establecimientos_diversificado_limpio.csv
+```
+
+El archivo procesado contiene 11,867 registros y 18 variables: las 17
+originales limpias más `ZONA_CAPITAL`. No contiene filas vacías, duplicados
+exactos ni espacios múltiples. Los casos que requieren revisión manual se
+mantienen documentados en `docs/informe_calidad.md`.
+
 ## Archivos principales
 
 ```text
@@ -48,12 +72,16 @@ notebooks/03_limpieza_datos_turno1_vianka.ipynb
 src/unir_csv.py                        unión de los 23 CSV
 src/diagnostico.py                     diagnóstico inicial
 src/limpieza.py                        limpieza aprobada
+src/generar_dataset.py                 generación del CSV procesado
 src/validacion.py                      pruebas del conjunto limpio
+src/metricas_calidad.py                métricas reproducibles antes/después
+tests/test_calidad.py                   pruebas automáticas de calidad
 docs/fuente_datos.md                   fuente y conversión
 docs/plan_limpieza.md                  plan compartido
 docs/registro_transformaciones.csv     cambios realizados
 docs/informe_calidad.md                comparación antes y después
 docs/codebook.md                       libro de códigos compartido
+reports/calidad/                        tablas que respaldan el informe
 ```
 
 ## Forma sencilla de trabajar

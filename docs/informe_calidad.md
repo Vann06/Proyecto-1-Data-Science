@@ -4,23 +4,26 @@
 
 **Fuente:** Buscador de establecimientos educativos del Ministerio de Educación
 
-**Fecha de evaluación:** 25 de agosto de 2026
+**Fecha de evaluación:** 26 de agosto de 2026
 
-**Estado del resultado:** Aún no está listo. todavía no debe presentarse como conjunto limpio final
+**Estado del resultado:** conjunto procesado y validado automáticamente, con
+pendientes de revisión manual
 
 ## Alcance y método
 
 La columna **Antes** corresponde a la unión sin limpieza de los 23 CSV y la
-columna **Después (actual)** al resultado en memoria de
-`limpiar_datos_preliminar()`. La comparación se limita a las 17 variables
-sustantivas. Las dos columnas de trazabilidad y las 29 columnas derivadas de
-auditoría no entran en los denominadores porque no existían en la fuente.
+columna **Después** al resultado de `generar_conjunto_limpio()`. Los faltantes
+se comparan sobre las mismas 17 variables originales. `ZONA_CAPITAL` se informa
+como una variable derivada, pero no entra en el denominador de faltantes porque
+no existía en la fuente.
 
 Las tablas se regeneran con:
 
 ```bash
 python src/unir_csv.py
+python src/generar_dataset.py
 python src/metricas_calidad.py
+python -m pytest -q
 ```
 
 Los resultados tabulares quedan en `reports/calidad/`. Se considera faltante
@@ -30,69 +33,68 @@ columnas harían que dos registros iguales aparentaran ser distintos.
 
 ## Comparación antes y después
 
-| Métrica | Antes de limpiar | Después de la limpieza preliminar |
+| Métrica | Antes de limpiar | Después de limpiar |
 |---|---:|---:|
-| Registros | 11,890 | 11,890 |
-| Variables originales | 17 | 17 |
-| Valores faltantes | 4,217 (2.09%) | 4,838 (2.39%) |
-| Variables con al menos un faltante | 17 | 17 |
-| Duplicados exactos | 23 filas (22 repeticiones) | 23 filas (22 repeticiones) |
+| Registros | 11,890 | 11,867 |
+| Variables | 17 | 18 |
+| Valores faltantes | 4,217 (2.09%) | 4,447 (2.20%) |
+| Variables con al menos un faltante | 17 | 7 |
+| Duplicados exactos | 23 filas (22 repeticiones) | 0 |
 | Posibles duplicados parciales | 4,045 filas candidatas | 42 filas confirmadas, todavía sin resolver |
-| Variables con formato inconsistente | 9 | 5 |
+| Variables con formato inconsistente | 9 | 1 |
 | Variables con tipo incorrecto | 7 | 0 en memoria |
 | Categorías inconsistentes | Pendiente de consolidar | Pendiente de validar |
-| Celdas modificadas durante la limpieza | No aplica | 41,164 |
+| Celdas modificadas durante la limpieza | No aplica | 43,901 |
 
 ### ¿Cómo se interpreta la comparación?
 
-- La cantidad de registros no cambió porque todavía se conservan las 23 filas
-  completamente vacías. Si el equipo aprueba eliminarlas, el resultado final
-  tendría 11,867 registros.
+- Se retiraron las 23 filas completamente vacías porque no representaban
+  establecimientos. Con esto también desaparecieron los duplicados exactos.
+- El conjunto pasó de 17 a 18 variables por la creación de `ZONA_CAPITAL`, que
+  conserva la zona que originalmente estaba almacenada en `MUNICIPIO`.
 - Los faltantes aumentaron porque la limpieza identificó valores que parecían
   texto normal, pero en realidad significaban ausencia de información. Por
   ejemplo, `SIN ESPECIFICAR`, guiones o teléfonos sin números recuperables se
   convirtieron en `NA`. Esto mejora la forma de representar los faltantes; no
   significa que se haya perdido información.
-- Los 23 duplicados exactos son las filas vacías. Al ser una misma fila repetida
-  23 veces, se cuentan 22 repeticiones adicionales.
+- Antes de limpiar, los 23 duplicados exactos eran las filas vacías. Al ser una
+  misma fila repetida 23 veces, representaban 22 repeticiones adicionales.
 - De las 4,045 filas inicialmente marcadas como candidatas a duplicado parcial,
   42 tienen además la misma dirección, jornada y plan. Estas 42 filas forman 21
   grupos y todavía deben revisarse antes de decidir si se conservan, corrigen o
   fusionan.
-- Las cinco variables que aún presentan problemas de formato son `DISTRITO`,
-  `ESTABLECIMIENTO`, `DIRECCION`, `SUPERVISOR` y `DIRECTOR`.
-- Las 17 variables originales se mantienen. El DataFrame también contiene dos
-  columnas de trazabilidad y 29 columnas de auditoría, para un total de 48. Esas
-  columnas adicionales no se contaron como variables originales.
-- Las 41,164 celdas modificadas no representan necesariamente 41,164 errores
+- La única variable que conserva un formato incompleto es `DISTRITO`, con 70
+  valores `NN-` pendientes de revisión. Los espacios múltiples fueron
+  normalizados en los demás campos de texto.
+- Las 43,901 celdas modificadas no representan necesariamente 43,901 errores
   distintos. Una celda se cuenta una vez aunque haya pasado por varias reglas
   de limpieza.
 
-La tabla presenta el resultado disponible al 25 de agosto de 2026. Sigue siendo
-una comparación preliminar porque todavía no se ha generado ni validado el CSV
-limpio final.
+La tabla presenta el resultado disponible al 26 de agosto de 2026. El CSV
+procesado ya se genera y supera las validaciones automáticas, pero conserva los
+casos que requieren revisión manual.
 
 ## Valores faltantes por variable
 
 | Variable | Antes, n (%) | Después actual, n (%) | Cambio observado |
 |---|---:|---:|---|
-| `CODIGO` | 23 (0.19%) | 23 (0.19%) | Solo corresponden a filas completamente vacías. |
-| `DISTRITO` | 555 (4.67%) | 555 (4.67%) | Se representan como `NA`; no se imputan. |
-| `DEPARTAMENTO` | 23 (0.19%) | 23 (0.19%) | Solo filas vacías. |
-| `MUNICIPIO` | 23 (0.19%) | 23 (0.19%) | Solo filas vacías. |
-| `ESTABLECIMIENTO` | 28 (0.24%) | 28 (0.24%) | Continúan como cadenas vacías; deben convertirse a `NA` o resolverse. |
-| `DIRECCION` | 99 (0.83%) | 271 (2.28%) | Se detectan 172 faltantes disfrazados adicionales. |
-| `TELEFONO` | 969 (8.15%) | 993 (8.35%) | Se reclasifican 24 valores sin número recuperable. |
-| `SUPERVISOR` | 558 (4.69%) | 561 (4.72%) | Se reconocen 3 marcadores adicionales; no hubo imputaciones efectivas. |
-| `DIRECTOR` | 1,755 (14.76%) | 2,174 (18.28%) | Se reconocen 419 marcadores o nombres no identificables adicionales. |
-| `NIVEL` | 23 (0.19%) | 23 (0.19%) | Solo filas vacías. |
-| `SECTOR` | 23 (0.19%) | 23 (0.19%) | Solo filas vacías. |
-| `AREA` | 23 (0.19%) | 26 (0.22%) | Tres valores `SIN ESPECIFICAR` pasan a `NA`. |
-| `STATUS` | 23 (0.19%) | 23 (0.19%) | Solo filas vacías. |
-| `MODALIDAD` | 23 (0.19%) | 23 (0.19%) | Solo filas vacías. |
-| `JORNADA` | 23 (0.19%) | 23 (0.19%) | `SIN JORNADA` se conserva como categoría válida. |
-| `PLAN` | 23 (0.19%) | 23 (0.19%) | Solo filas vacías. |
-| `DEPARTAMENTAL` | 23 (0.19%) | 23 (0.19%) | Solo filas vacías. |
+| `CODIGO` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
+| `DISTRITO` | 555 (4.67%) | 532 (4.48%) | Se representan como `NA`; no se imputan. |
+| `DEPARTAMENTO` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
+| `MUNICIPIO` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
+| `ESTABLECIMIENTO` | 28 (0.24%) | 5 (0.04%) | Cinco establecimientos con código conservan el nombre faltante. |
+| `DIRECCION` | 99 (0.83%) | 248 (2.09%) | Se reconocen valores que solo repetían el municipio como faltantes. |
+| `TELEFONO` | 969 (8.15%) | 970 (8.17%) | Se reclasifican valores sin número recuperable. |
+| `SUPERVISOR` | 558 (4.69%) | 538 (4.53%) | Se reconocen marcadores adicionales; no hubo imputaciones seguras. |
+| `DIRECTOR` | 1,755 (14.76%) | 2,151 (18.13%) | Se reconocen marcadores o nombres no identificables adicionales. |
+| `NIVEL` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
+| `SECTOR` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
+| `AREA` | 23 (0.19%) | 3 (0.03%) | Tres valores `SIN ESPECIFICAR` pasan a `NA`. |
+| `STATUS` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
+| `MODALIDAD` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
+| `JORNADA` | 23 (0.19%) | 0 (0.00%) | `SIN JORNADA` se conserva como categoría válida. |
+| `PLAN` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
+| `DEPARTAMENTAL` | 23 (0.19%) | 0 (0.00%) | Los faltantes pertenecían a las filas vacías eliminadas. |
 
 Que aumente el número de `NA` puede ser una mejora de calidad: ahora la
 ausencia se representa de manera uniforme y deja de confundirse con una
@@ -100,7 +102,7 @@ categoría o con texto libre. No se imputaron datos sin evidencia.
 
 ## Transformaciones observadas
 
-En las 11,867 filas con información cambiaron 41,164 celdas de las variables
+En las 11,867 filas con información cambiaron 43,901 celdas de las variables
 originales. Los cambios se concentran en la escritura geográfica canónica
 (`DEPARTAMENTO`, `MUNICIPIO` y `DEPARTAMENTAL`), además del tratamiento de
 direcciones, teléfonos y nombres de personas. Las columnas `*_ORIGINAL`
@@ -113,10 +115,10 @@ formato legado pertenece al dominio válido o si requiere revisión manual.
 
 ## Duplicados
 
-Los 23 duplicados exactos son filas completamente vacías: una por archivo de
-origen. No representan establecimientos y explican las 22 copias adicionales
-de una misma fila vacía. Su eliminación todavía no está implementada ni
-registrada como transformación.
+Los 23 duplicados exactos iniciales eran filas completamente vacías: una por
+archivo de origen. Al generar el conjunto procesado se eliminan únicamente las
+filas vacías en las 17 variables originales. El resultado no contiene
+duplicados exactos.
 
 La comparación por nombre normalizado y municipio produce 1,112 grupos
 candidatos (4,045 filas). Al exigir además la misma jornada, plan y dirección,
@@ -127,24 +129,23 @@ fusionar registros o eliminar un duplicado, junto con la evidencia consultada.
 
 ## Validación y limitaciones actuales
 
-El pipeline todavía no satisface todas las pruebas finales solicitadas:
+Las cuatro pruebas automáticas implementadas comprueban el esquema, la
+dimensión, los duplicados exactos, los espacios, códigos, teléfonos, catálogos
+disponibles, tipos y dominios categóricos. Todas finalizan correctamente.
 
-- `validar_datos()` termina deliberadamente en `NotImplementedError`.
-- `tests/test_calidad.py` no contiene pruebas ejecutables.
-- Permanecen 23 filas vacías y, por ello, duplicados exactos sustantivos.
-- Permanecen 70 valores de `DISTRITO` con formato incompleto `NN-`.
-- Hay 1,395 establecimientos, 485 direcciones, 102 supervisores y 905
-  directores con espacios múltiples después de la limpieza.
+Permanecen estas limitaciones:
+
+- Hay 70 valores de `DISTRITO` con formato incompleto `NN-`.
+- Se conservan 90 celdas telefónicas con al menos un número de 7 dígitos.
 - `MUNICIPIO` se corrige con un diccionario ortográfico, pero no se valida
   contra un catálogo oficial completo de combinaciones departamento-municipio.
 - Los 21 grupos de posibles duplicados confirmados no tienen decisión final.
-- No existe todavía un CSV en `data/processed/` ni una definición aprobada de
-  las columnas que debe contener.
+- La fecha exacta de extracción continúa pendiente de confirmación.
 
 ## Conclusión
 
-La limpieza implementada mejora la representación de faltantes, normaliza la
-geografía, estructura los teléfonos y conserva trazabilidad. Sin embargo, el
-resultado debe considerarse preliminar. Para poder informar ceros en las
-métricas de errores finales primero deben resolverse los casos pendientes,
-generarse el CSV procesado y ejecutarse pruebas automáticas completas.
+La limpieza implementada normaliza la geografía y los campos de texto,
+estructura los teléfonos, elimina las filas vacías y genera un CSV de 11,867
+registros y 18 variables. Las pruebas automáticas confirman que no contiene
+duplicados exactos ni espacios inconsistentes. Los casos enumerados en la
+sección anterior permanecen documentados para su revisión manual.
