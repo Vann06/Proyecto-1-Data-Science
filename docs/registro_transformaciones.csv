@@ -10,15 +10,21 @@ ZONA_CAPITAL,"La zona capitalina estaba almacenada en MUNICIPIO","Extraer ZONA N
 DEPARTAMENTAL,"Mayúsculas y tildes inconsistentes","Aplicar un catálogo administrativo independiente de 26 categorías",11867,"Conserva Norte, Sur, Oriente, Occidente y Quiché Norte sin igualar variables distintas",VIANKA
 CODIGO/DEPARTAMENTO/MUNICIPIO,"Posibles contradicciones entre el código y la geografía","Agregar banderas de consistencia por prefijo",0,"No se encontraron contradicciones ni prefijos asociados con varios municipios",VIANKA
 CODIGO/DISTRITO/DEPARTAMENTO/MUNICIPIO/DEPARTAMENTAL,"Posibles duplicados exactos","Agregar DUPLICADO_EXACTO_VIANKA sin eliminar filas",0,"CODIGO es único y no se detectaron coincidencias exactas completas",VIANKA
-ESTABLECIMIENTO,,,,,RICARDO
-DIRECCION,,,,,RICARDO
-TELEFONO,,,,,RICARDO
-SUPERVISOR,,,,,RICARDO
-DIRECTOR,,,,,RICARDO
-NIVEL,,,,,NADISSA
-SECTOR,,,,,NADISSA
-AREA,,,,,NADISSA
-STATUS,,,,,NADISSA
-MODALIDAD,,,,,NADISSA
-JORNADA,,,,,NADISSA
-PLAN,,,,,NADISSA
+ESTABLECIMIENTO,"Espacios múltiples en el nombre visible","Colapsar secuencias de espacios y conservar ESTABLECIMIENTO_ORIGINAL",1395,"Uniforma el nombre sin eliminar palabras, tildes ni puntuación",RICARDO
+ESTABLECIMIENTO,"Posibles duplicados por variantes de escritura","Crear clave de comparación y marcar grupos por nombre normalizado y municipio",4045,"Permite revisar duplicados sin fusionar ni eliminar automáticamente",RICARDO
+DIRECCION,"Vacíos y valores que únicamente repiten el municipio","Convertir valores sin información a NA",271,"Una repetición exacta del municipio no aporta una dirección",RICARDO
+DIRECCION,"Municipio o fecha redundante, letra O por cero y espacios múltiples","Aplicar las reglas aprobadas y conservar DIRECCION_ORIGINAL",1377,"Uniforma la dirección sin modificar los archivos crudos",RICARDO
+TELEFONO,"Vacíos, varios separadores y números no recuperables","Representar los contactos recuperables con 7 u 8 dígitos separados por punto y coma; usar NA si no hay ninguno",1189,"Deja un formato estructural uniforme y conserva TELEFONO_ORIGINAL",RICARDO
+SUPERVISOR,"Ausencias, variantes de escritura y contaminación puntual","Normalizar espacios y grafías, fusionar variantes dentro del distrito y usar NA cuando no hay nombre identificable",696,"Reduce variantes sin cruzar jurisdicciones y conserva SUPERVISOR_ORIGINAL",RICARDO
+SUPERVISOR,"Faltantes potencialmente imputables por distrito","Imputar únicamente cuando existe una referencia del mismo distrito",0,"Ningún faltante tenía una referencia segura dentro de su distrito",RICARDO
+DIRECTOR,"Ausencias, títulos incrustados, variantes y espacios múltiples","Separar el título, normalizar el nombre y usar NA cuando no es identificable",3195,"Distingue el nombre del título y conserva DIRECTOR_ORIGINAL",RICARDO
+DIRECTOR_TITULO,"Título profesional incluido al inicio de DIRECTOR","Extraer el título a una variable de auditoría",20,"Evita mezclar el tratamiento profesional con el nombre",RICARDO
+NIVEL,"Variable categórica almacenada como texto","Asignar el dominio categórico DIVERSIFICADO",11867,"El nivel es constante por el filtro de extracción",NADISSA
+SECTOR,"Variable categórica almacenada como texto","Asignar un dominio cerrado de cuatro categorías",11867,"Evita categorías no aprobadas y conserva los valores observados",NADISSA
+AREA,"SIN ESPECIFICAR funciona como faltante disfrazado","Convertir SIN ESPECIFICAR a NA y asignar el dominio URBANA/RURAL",3,"Distingue la ausencia de información de las dos áreas válidas",NADISSA
+STATUS,"Variable categórica almacenada como texto","Asignar un dominio cerrado de cinco estados",11867,"Conserva los estados administrativos observados sin fusionarlos",NADISSA
+MODALIDAD,"Variable categórica almacenada como texto","Asignar el dominio MONOLINGUE/BILINGUE",11867,"Restringe la variable a las categorías aprobadas",NADISSA
+JORNADA,"Variable categórica almacenada como texto","Asignar el dominio aprobado y conservar SIN JORNADA",11867,"SIN JORNADA es informativo para ofertas sin horario fijo",NADISSA
+PLAN,"Variable categórica almacenada como texto","Asignar el dominio aprobado de 13 categorías",11867,"Conserva la jerarquía y las categorías de baja frecuencia",NADISSA
+REGISTRO,"Filas completamente vacías añadidas por las exportaciones","Eliminar filas vacías en las 17 variables originales al generar el CSV final",23,"No representan establecimientos y causaban los duplicados exactos",EQUIPO
+ESQUEMA_FINAL,"Columnas de auditoría mezcladas con variables analíticas","Conservar las 17 variables originales limpias y ZONA_CAPITAL en el CSV final",18,"Entrega un esquema analítico único; la auditoría permanece reproducible desde los datos crudos y el código",EQUIPO
