@@ -1,0 +1,5 @@
+﻿revision,cantidad,detalle
+categorias observadas,23,22 departamentos oficiales y una categoria especial de la fuente
+registros en CIUDAD CAPITAL,2161,particion de la fuente; no es departamento oficial
+departamentos sin tilde normativa,2025,"PETEN, QUICHE, SACATEPEQUEZ, SOLOLA, SUCHITEPEQUEZ, TOTONICAPAN"
+valores fuera del catalogo preliminar,0,excluye la categoria especial CIUDAD CAPITAL

@@ -1,4 +1,13 @@
 ﻿variable,problema,categoria,cantidad,porcentaje,requiere_limpieza,estrategia_sugerida,ejemplo
+CODIGO,Riesgo de tipado de un identificador numerico,tipo,11890,100.0,No,Conservar como texto y validar formato/unicidad; no convertir a numero,16-01-0001-46
+DISTRITO,Valor vacio,faltante,555,4.67,Si,Representar como NA; no imputar sin catalogo oficial,
+DISTRITO,Codigo incompleto que termina en guion,formato,70,0.59,Si,Marcar para revision; no completar digitos automaticamente,01- | 17- | 10-
+DISTRITO,Dos estructuras ampliamente usadas,formato,11335,95.33,Revisar,Conservar ambos formatos hasta contrastar el catalogo MINEDUC,16-006 | 16-01-0924
+DEPARTAMENTO,Categoria especial CIUDAD CAPITAL,dominio,2161,18.17,Si,Mapear geograficamente a Guatemala sin perder la condicion de capital,CIUDAD CAPITAL
+DEPARTAMENTO,Tildes omitidas en departamentos con acento normativo,ortografia,2025,17.03,Si,Usar nombres oficiales bien escritos para el dato final,PETEN -> Petén | QUICHE -> Quiché
+MUNICIPIO,Zonas capitalinas almacenadas como municipio,consistencia,2161,18.17,Si,Conservar la zona como sububicacion y asignar municipio Guatemala,ZONA 1 | ZONA 10 | ZONA 25
+MUNICIPIO,Etiquetas pendientes de validacion ortografica contra catalogo,catalogo,352,2.96,Si,Cruzar cada etiqueta con el catalogo oficial y conservar la escritura correcta,COBAN -> Cobán | AMATITLAN -> Amatitlán
+DEPARTAMENTAL,No siempre coincide textualmente con DEPARTAMENTO,consistencia,6094,51.25,Revisar,Tratarla como division administrativa propia; normalizar tildes sin forzar igualdad,GUATEMALA NORTE | GUATEMALA SUR | QUICHÉ NORTE
 TELEFONO,Vacio,faltante,969,8.15,No,"Faltante legitimo, dejar NA",
 TELEFONO,"Formato no estandar (varios num., legado 7 dig, extension)",formato,251,2.11,Si,Separar con separar_numeros() a lista de 8 digitos,78208583-78209143 | 4085613
 ESTABLECIMIENTO,Tildes inconsistentes,formato,3223,27.11,Si,Normalizar solo para agrupar; conservar el nombre real,EDUCACION con y sin tilde
@@ -10,7 +19,7 @@ DIRECCION,Solo el municipio (faltante disfrazado),faltante,169,1.42,Si,"Reclasif
 DIRECCION,Municipio redundante al final,formato,948,7.97,Si,Recortar el sufijo del municipio,... ZONA 5 HUEHUETENANGO
 DIRECCION,Fecha incrustada al final,contaminacion,26,0.22,Si,Recortar la fecha final (exige dos separadores),... 22/02/20
 DIRECCION,Letra O por cero,contaminacion,10,0.08,Si,Corregir O->0 en contexto numerico,O AV. 0-06 | OC-150
-SUPERVISOR,Ausencia real,faltante,561,4.72,Si,Imputable: por DISTRITO en el plan,
+SUPERVISOR,Ausencia real,faltante,561,4.72,Si,Representar como NA; no imputar sin fecha de vigencia,
 SUPERVISOR,Variantes por tildes del mismo nombre,duplicado,192,1.61,Si,Fusionar con normalizar_nombre(),GONZALEZ DE LEON con y sin tilde
 SUPERVISOR,"Caracter raro (O/0, tilde grave, apostrofo)",contaminacion,16,0.13,Si,Corregir grafias en contexto,ACEVED0 | ORTIZ grave | O'NELL
 DIRECTOR,Ausencia real (incluye 360 disfrazados que 3.c no vio),faltante,2174,18.28,Si,Convertir disfrazados a NA primero; no imputable,--- | 000000 | SIN DATOS
@@ -23,5 +32,5 @@ AREA,"""SIN ESPECIFICAR"" es faltante disfrazado de categoria",faltante,3,0.03,S
 AREA,Contradice DEPARTAMENTO: 12 RURAL en Ciudad Capital (9/12 con respaldo en DIRECCION en zonas 17/18/25; 3/12 sin respaldo en zonas 1/2/7),estructural,12,0.1,Revisar,Revisar caso a caso contra DIRECCION; NO corregir automaticamente,ZONA 17 - ALDEA CANALITOS
 JORNADA,"""SIN JORNADA"" (9.26%) parece faltante pero 96% cruza con PLAN semipresencial/a distancia: es valor real",estructural,1099,9.24,No,Mantener como categoria; documentar el motivo en el codebook,SIN JORNADA
 PLAN,"""SEMIPRESENCIAL"" generico (118) sin el detalle de sus 3 subcategorias especificas",estructural,118,0.99,Documentar,Conservar las 4 categorias; documentar la jerarquia en el codebook,SEMIPRESENCIAL
-PLAN,Categorias de frecuencia muy baja (posible typo o caso real raro),estructural,9,0.08,Revisar,Revisar manualmente contra SECTOR/JORNADA antes de fusionar,IRREGULAR | INTERCALADO | MIXTO
-STATUS,"""TEMPORAL TITULOS""/""TEMPORAL NOMBRAMIENTO"" sin catalogo oficial disponible para validar",estructural,160,1.35,Validar,Mantener; documentar como estado administrativo distinto de CERRADA,TEMPORAL TITULOS
+PLAN,Categorias de frecuencia muy baja revisadas,estructural,9,0.08,No,Conservar como categorias observadas; no hay evidencia para fusionarlas,IRREGULAR | INTERCALADO | MIXTO
+STATUS,"""TEMPORAL TITULOS""/""TEMPORAL NOMBRAMIENTO"" son estados administrativos observados",estructural,160,1.35,No,Mantener como estados administrativos distintos de CERRADA,TEMPORAL TITULOS

@@ -4,6 +4,11 @@ project:
   render:
     - index.qmd
     - notebooks/*.ipynb
+    - docs/fuente_datos.md
+    - docs/plan_limpieza.md
+    - docs/informe_calidad.md
+    - docs/codebook.md
+    - docs/revision_cumplimiento.md
 
 website:
   title: "Proyecto 1 · Data Science"
@@ -15,6 +20,10 @@ website:
         text: Inicio
       - href: notebooks/01_ingesta_diagnostico_inicial.ipynb
         text: Diagnóstico inicial
+      - href: docs/informe_calidad.md
+        text: Informe de calidad
+      - href: docs/codebook.md
+        text: Libro de códigos
     tools:
       - icon: github
         href: https://github.com/Vann06/Proyecto-1-Data-Science

@@ -5,16 +5,17 @@ subtitle: "Obtención y Limpieza de Datos"
 
 ## CC3084 · Data Science
 
-Este sitio documentará el proceso reproducible de obtención, diagnóstico,
+Este sitio documenta el proceso reproducible de obtención, diagnóstico,
 limpieza y validación de los datos de establecimientos educativos de Guatemala.
 
 ::: {.callout-note}
-El proyecto cuenta con ingesta, diagnóstico, limpieza, generación del conjunto
-procesado, métricas comparativas y pruebas automáticas reproducibles. Los casos
-que requieren revisión manual permanecen documentados en el informe de calidad.
+La versión 1.0.0 cuenta con ingesta, diagnóstico, limpieza, catálogo oficial de
+340 municipios, generación del conjunto procesado, métricas comparativas y
+pruebas automáticas del CSV persistido. No quedan decisiones de calidad
+pendientes.
 :::
 
-## Entregables previstos
+## Entregables
 
 - Código reproducible.
 - Datos crudos en formato CSV.
@@ -24,3 +25,5 @@ que requieren revisión manual permanecen documentados en el informe de calidad.
 - Informe de calidad con métricas reproducibles.
 - Libro de códigos actualizado.
 - Un conjunto procesado de 11,867 registros y 18 variables.
+- Catálogo geográfico oficial de referencia.
+- Revisión documentada de 1,085 pares de posibles duplicados parciales.

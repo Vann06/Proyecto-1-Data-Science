@@ -1,38 +1,35 @@
-# Revisión de cumplimiento del Proyecto 1
+# Revisión final de cumplimiento del Proyecto 1
 
 ## Resultado general
 
-El repositorio contiene ingesta, diagnóstico, plan, limpieza, generación del
-CSV procesado, validaciones automáticas, métricas comparativas y documentación
-reproducible. Permanecen cinco asuntos que requieren una fuente externa o
-revisión manual.
+La versión 1.0.0 cubre la obtención documentada, unión, diagnóstico, plan,
+limpieza, registro de transformaciones, validación, comparación antes/después,
+libro de códigos y generación del CSV limpio. El PDF del libro de códigos se
+mantiene fuera del alcance de esta revisión por decisión del equipo.
 
-| Requisito de la guía | Estado | Evidencia o cambio necesario |
+| Requisito de la guía | Estado | Evidencia |
 |---|---|---|
-| Obtención, CSV crudos y unión | Parcialmente cumplido | Existen 23 CSV y `src/unir_csv.py` reproduce la unión. `src/obtencion.py` sigue como esqueleto y la fecha exacta de descarga está pendiente. |
-| Diagnóstico inicial | Mayormente cumplido | El notebook principal incluye dimensiones, tipos, faltantes, únicos, duplicados, dominios y formatos. El notebook geográfico no tiene ejecución guardada y conviene consolidar todas las tablas finales. |
-| Plan de limpieza previo | Cumplido con pendientes documentados | Cubre las 17 variables, la eliminación de filas vacías y el esquema final; cada regla incluye justificación y riesgo. |
-| Limpieza de todas las variables | Mayormente cumplido | El CSV final no contiene filas vacías ni espacios múltiples. Permanecen distritos incompletos, teléfonos legados, validación municipal y duplicados parciales en revisión. |
-| Registro de transformaciones | Cumplido | Las transformaciones de las 17 variables, la eliminación de filas y el esquema final incluyen cantidad y justificación. |
-| Pruebas automáticas | Cumplido para las reglas implementadas | Cuatro pruebas validan esquema, dimensiones, duplicados, espacios, códigos, teléfonos, dominios y tipos; los pendientes manuales tienen controles de regresión. |
-| Informe antes/después | Cumplido con pendientes documentados | `docs/informe_calidad.md` compara el conjunto crudo con el procesado mediante tablas generadas por código. |
-| Conjunto limpio único | Cumplido | `src/generar_dataset.py` produce 11,867 registros y 18 variables en `data/processed/`. |
-| Libro de códigos | Mayormente cumplido | Documenta las variables, tratamientos y columnas de auditoría; la fecha exacta de extracción continúa pendiente. |
-| PDF del libro de códigos | No cumplido | No se encontró un PDF final del codebook en el repositorio. |
-| Reproducibilidad | Cumplido | La unión, generación del CSV, métricas y pruebas se ejecutan mediante comandos documentados en `README.md`. |
+| Obtención, CSV crudos y unión | Cumplido | `src/obtencion.py` convierte exportaciones HTML/XLS, valida los 23 CSV y ejecuta la unión reproducible. |
+| Diagnóstico inicial | Cumplido | Los notebooks y reportes incluyen dimensiones, tipos, faltantes, únicos, duplicados, dominios, formatos y problemas potenciales. |
+| Plan de limpieza previo | Cumplido | `docs/plan_limpieza.md` cubre las 17 variables, la variable derivada, justificación y riesgos. |
+| Limpieza de todas las variables | Cumplido | Los formatos inválidos detectados se corrigen o pasan a `NA` sin imputación especulativa. |
+| Registro de transformaciones | Cumplido | `docs/registro_transformaciones.csv` contiene problema, transformación, cantidad, justificación y responsable. |
+| Duplicados exactos y parciales | Cumplido | No quedan duplicados exactos; 1,085 pares parciales fueron revisados con RapidFuzz y documentados individualmente. |
+| Pruebas automáticas | Cumplido | Las pruebas validan el DataFrame generado y el CSV persistido, incluyendo geografía oficial y dominios. |
+| Informe antes/después | Cumplido | Todas las métricas requeridas tienen valores finales reproducibles. |
+| Conjunto limpio único | Cumplido | `data/processed/establecimientos_diversificado_limpio.csv` contiene 11,867 registros y 18 variables. |
+| Libro de códigos en Markdown | Cumplido | La versión 1.0.0 enumera descripción, tipo, dominio, valores, tratamiento, fuente, fecha y variable derivada. |
+| PDF del libro de códigos | Fuera de alcance | No se genera en esta fase por decisión explícita del equipo. |
+| Reproducibilidad | Cumplido | El README contiene una secuencia única desde la validación de los datos crudos hasta las pruebas. |
+| Contribuciones del equipo | Cumplido | Los cuatro integrantes tienen contribuciones en el repositorio y el codebook final se actualiza en la rama de limpieza de Ricardo. |
 
-## Hallazgos que conviene corregir primero
+## Controles finales
 
-1. Revisar los 21 grupos confirmados de duplicados parciales y documentar una
-   decisión por grupo. Marcar no sustituye la revisión caso por caso que exige
-   la guía.
-2. Resolver los 70 distritos incompletos o definirlos como faltantes/revisión
-   aceptada con evidencia institucional. Mientras permanezcan, no puede
-   afirmarse que no existen formatos inválidos.
-3. Alinear el dominio de teléfonos: el plan acepta provisionalmente 7 u 8
-   dígitos y hay 90 celdas con al menos un número de 7 dígitos.
-4. Confirmar la fecha exacta de extracción y actualizar la versión final del
-   libro de códigos.
-5. Incorporar un catálogo oficial completo de municipios por departamento. El
-   diccionario actual corrige ortografía, pero no demuestra pertenencia al
-   catálogo correspondiente.
+- 23 CSV crudos y 17 variables originales.
+- 11,890 filas crudas; 11,867 filas con información.
+- 11,867 registros y 18 variables en el CSV final.
+- Cero duplicados exactos.
+- Cero formatos inválidos detectados.
+- Cero pares de duplicados parciales pendientes de decisión.
+- 340 municipios disponibles en el catálogo oficial de referencia.
+- CSV final incluido explícitamente en el repositorio.
