@@ -10,9 +10,14 @@ import math
 import re
 import unicodedata
 from numbers import Real
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CATALOGO_MUNICIPIOS = ROOT / "data" / "reference" / "municipios_guatemala.csv"
 
 
 def es_faltante_escalar(valor: Any) -> bool:
@@ -237,3 +242,22 @@ def nombre_geografico(valor: Any) -> Any:
         else:
             palabras.append(palabra.title())
     return " ".join(palabras)
+
+
+def cargar_catalogo_municipios() -> pd.DataFrame:
+    """Carga los 340 códigos municipales publicados por SEGEPLAN para 2026."""
+    if not CATALOGO_MUNICIPIOS.exists():
+        raise FileNotFoundError(
+            "Falta data/reference/municipios_guatemala.csv. "
+            "Genérelo con python src/generar_catalogo_municipios.py."
+        )
+    catalogo = pd.read_csv(CATALOGO_MUNICIPIOS, dtype="string", encoding="utf-8-sig")
+    if len(catalogo) != 340 or catalogo["codigo_municipio"].nunique() != 340:
+        raise ValueError("El catálogo municipal debe contener 340 códigos únicos.")
+    return catalogo
+
+
+def codigo_municipal_desde_establecimiento(codigo: pd.Series) -> pd.Series:
+    """Obtiene el código municipal de cuatro dígitos desde CODIGO."""
+    resultado = codigo.astype("string").str.slice(0, 5).str.replace("-", "", regex=False)
+    return resultado.mask(resultado.str.startswith("00", na=False), "0101")
