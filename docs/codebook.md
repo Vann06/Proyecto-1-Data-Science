@@ -1,13 +1,19 @@
 # Libro de códigos
 
-**Proyecto:** Obtención y Limpieza de Datos
-**Fuente:** Buscador de establecimientos educativos del Ministerio de Educación de Guatemala
-**Filtro:** `NIVEL ESCOLAR: DIVERSIFICADO`
-**Fecha de extracción documentada por el equipo:** 17 de julio de 2026
-**Fecha de cierre de calidad:** 31 de agosto de 2026
-**Versión del conjunto limpio:** 1.0.0
+- **Proyecto:** Obtención y Limpieza de Datos
+- **Fuente:** Buscador de establecimientos educativos del Ministerio de Educación de Guatemala
+- **Filtro:** `NIVEL ESCOLAR: DIVERSIFICADO`
+- **Fecha de extracción documentada por el equipo:** 17 de julio de 2026
+- **Fecha de cierre de calidad:** 31 de agosto de 2026
+- **Versión del conjunto limpio:** 1.0.0
 
-Los cuatro integrantes contribuyeron al repositorio y al libro de códigos. El
+**Integrantes**
+- Vianka Castro 
+- Angie Vela
+- Nina Najera
+- Ricardo Godínez
+
+Todos los integrantes contribuyeron al repositorio y al libro de códigos. El
 CSV final contiene las 17 variables de la fuente y la variable derivada
 `ZONA_CAPITAL`.
 
