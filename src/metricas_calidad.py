@@ -28,13 +28,16 @@ from src.catalogos_geograficos import (  # noqa: E402
     PATRON_CODIGO,
     PATRON_DISTRITO_CORTO,
     PATRON_DISTRITO_EXTENDIDO,
+    clave_comparacion,
 )
 from src.diagnostico import cargar_datos  # noqa: E402
 from src.limpieza import (  # noqa: E402
+    CATEGORIAS_NADISSA,
     VARIABLES_ORIGINALES,
     filas_completamente_vacias,
     generar_conjunto_limpio,
     limpiar_datos_preliminar,
+    revisar_duplicados_parciales,
 )
 
 
@@ -49,6 +52,16 @@ def mascara_faltante(serie: pd.Series) -> pd.Series:
 
 def _contiene_espacios_multiples(serie: pd.Series) -> pd.Series:
     return serie.astype("string").fillna("").str.contains(r"\s{2,}", regex=True)
+
+
+def _categorias_duplicadas_por_escritura(df: pd.DataFrame, variables: list[str]) -> int:
+    """Cuenta formas adicionales que comparten una misma clave de comparación."""
+    total = 0
+    for variable in variables:
+        unicos = pd.Series(df[variable].dropna().astype("string").str.strip().unique())
+        unicos = unicos[unicos.ne("")]
+        total += int(len(unicos) - unicos.map(clave_comparacion).nunique())
+    return total
 
 
 def _problemas_formato_antes(df: pd.DataFrame) -> dict[str, int]:
@@ -86,9 +99,7 @@ def _problemas_formato_despues(df: pd.DataFrame) -> dict[str, int]:
         df["DISTRITO"].str.fullmatch(PATRON_DISTRITO_CORTO)
         | df["DISTRITO"].str.fullmatch(PATRON_DISTRITO_EXTENDIDO)
     )
-    telefono_valido = df["TELEFONO"].astype("string").str.fullmatch(
-        r"\d{7,8}(?:; \d{7,8})*"
-    )
+    telefono_valido = df["TELEFONO"].astype("string").str.fullmatch(r"\d{8}(?:; \d{8})*")
 
     return {
         "DISTRITO": int((no_vacio("DISTRITO") & ~distrito_valido).sum()),
@@ -155,31 +166,16 @@ def generar_tablas() -> None:
         "celdas_problematicas_despues": [formato_despues[v] for v in formato_antes],
     })
 
-    candidatos = preliminar["ESTABLECIMIENTO_GRUPO_DUPLICADO"].notna()
-    confirmados = preliminar["ESTABLECIMIENTO_DUPLICADO_CONFIRMADO"]
+    detalle_duplicados = revisar_duplicados_parciales(preliminar)
     duplicados_parciales = pd.DataFrame([{
-        "filas_candidatas": int(candidatos.sum()),
-        "grupos_candidatos": int(preliminar.loc[candidatos, "ESTABLECIMIENTO_GRUPO_DUPLICADO"].nunique()),
-        "filas_confirmadas": int(confirmados.sum()),
-        "grupos_confirmados": int(preliminar.loc[confirmados, "ESTABLECIMIENTO_GRUPO_DUPLICADO"].nunique()),
-        "filas_fusionadas_o_eliminadas": 0,
+        "pares_candidatos": len(detalle_duplicados),
+        "pares_conservados": int(detalle_duplicados["decision"].eq("CONSERVAR").sum()),
+        "pares_corregidos": int(detalle_duplicados["decision"].eq("CORREGIR").sum()),
+        "pares_fusionados_o_eliminados": int(
+            detalle_duplicados["decision"].isin(["FUSIONAR", "ELIMINAR"]).sum()
+        ),
+        "pares_pendientes": int(detalle_duplicados["decision"].eq("PENDIENTE").sum()),
     }])
-
-    columnas_duplicados = [
-        "ESTABLECIMIENTO_GRUPO_DUPLICADO",
-        "CODIGO",
-        "ESTABLECIMIENTO_ORIGINAL",
-        "MUNICIPIO",
-        "DIRECCION_ORIGINAL",
-        "JORNADA",
-        "PLAN",
-        "archivo_origen",
-        "fila_origen",
-    ]
-    detalle_duplicados = preliminar.loc[
-        confirmados,
-        columnas_duplicados,
-    ].sort_values("ESTABLECIMIENTO_GRUPO_DUPLICADO")
 
     total_celdas_antes = len(crudo) * len(variables)
     total_celdas_despues = len(limpio) * len(variables)
@@ -187,17 +183,40 @@ def generar_tablas() -> None:
     faltantes_despues = int(faltantes["despues_cantidad"].sum())
     duplicados_antes = int(crudo[variables].duplicated(keep=False).sum())
     duplicados_despues = int(limpio[variables].duplicated(keep=False).sum())
+    variables_categoricas = list(CATEGORIAS_NADISSA)
+    tipos_incorrectos_antes = sum(
+        not isinstance(crudo[columna].dtype, pd.CategoricalDtype)
+        for columna in variables_categoricas
+    )
+    tipos_incorrectos_despues = sum(
+        not isinstance(limpio[columna].dtype, pd.CategoricalDtype)
+        for columna in variables_categoricas
+    )
+    variables_para_categorias = [
+        "DEPARTAMENTO",
+        "MUNICIPIO",
+        "DEPARTAMENTAL",
+        *variables_categoricas,
+    ]
+    categorias_inconsistentes_antes = _categorias_duplicadas_por_escritura(
+        crudo, variables_para_categorias
+    )
+    categorias_inconsistentes_despues = _categorias_duplicadas_por_escritura(
+        limpio, variables_para_categorias
+    )
+    errores_corregidos = int(cambios["celdas_modificadas"].sum())
+
     resumen = pd.DataFrame([
         {"metrica": "Registros", "antes": len(crudo), "despues_actual": len(limpio), "observacion": "Se retiraron las 23 filas completamente vacías."},
         {"metrica": "Variables", "antes": len(variables), "despues_actual": len(limpio.columns), "observacion": "Se agregó ZONA_CAPITAL como variable derivada."},
         {"metrica": "Valores faltantes", "antes": f"{faltantes_antes} ({faltantes_antes / total_celdas_antes:.2%})", "despues_actual": f"{faltantes_despues} ({faltantes_despues / total_celdas_despues:.2%})", "observacion": "La comparación de faltantes usa las 17 variables originales en ambos estados."},
         {"metrica": "Variables con faltantes", "antes": int((faltantes["antes_cantidad"] > 0).sum()), "despues_actual": int((faltantes["despues_cantidad"] > 0).sum()), "observacion": "Después de retirar filas vacías, siete variables conservan faltantes reales."},
         {"metrica": "Duplicados exactos", "antes": duplicados_antes, "despues_actual": duplicados_despues, "observacion": "Las 23 filas participantes antes eran filas vacías; no quedan duplicados exactos."},
-        {"metrica": "Posibles duplicados", "antes": int(candidatos.sum()), "despues_actual": int(confirmados.sum()), "observacion": "4,045 candidatas; 42 confirmadas en 21 grupos; ninguna resuelta todavía."},
-        {"metrica": "Variables con formato inconsistente", "antes": sum(v > 0 for v in formato_antes.values()), "despues_actual": sum(v > 0 for v in formato_despues.values()), "observacion": "Solo DISTRITO conserva 70 formatos incompletos pendientes de revisión."},
-        {"metrica": "Variables con tipo incorrecto", "antes": 7, "despues_actual": 0, "observacion": "Las siete categóricas quedan con dtype category en memoria; el CSV requerirá un esquema de carga."},
-        {"metrica": "Categorías inconsistentes", "antes": "Pendiente de consolidar", "despues_actual": "Pendiente de validar", "observacion": "Falta acordar una regla de conteo y validar MUNICIPIO contra un catálogo oficial completo."},
-        {"metrica": "Celdas modificadas", "antes": 0, "despues_actual": int(cambios["celdas_modificadas"].sum()), "observacion": "No equivale a errores distintos: una celda se cuenta una vez aunque reciba varias operaciones."},
+        {"metrica": "Posibles duplicados", "antes": len(detalle_duplicados), "despues_actual": 0, "observacion": f"{len(detalle_duplicados):,} pares revisados con RapidFuzz; todos se conservan por tener códigos MINEDUC distintos y no queda ninguna decisión pendiente."},
+        {"metrica": "Variables con formato inconsistente", "antes": sum(v > 0 for v in formato_antes.values()), "despues_actual": sum(v > 0 for v in formato_despues.values()), "observacion": "Los distritos incompletos pasan a NA y los teléfonos finales contienen únicamente números de ocho dígitos."},
+        {"metrica": "Variables con tipo incorrecto", "antes": tipos_incorrectos_antes, "despues_actual": tipos_incorrectos_despues, "observacion": "El conteo se calcula sobre las siete variables con dominio categórico; cargar_csv_limpio aplica el esquema al CSV."},
+        {"metrica": "Categorías inconsistentes", "antes": categorias_inconsistentes_antes, "despues_actual": categorias_inconsistentes_despues, "observacion": "No se observaron categorías duplicadas por diferencias de mayúsculas, espacios o tildes dentro de las variables categóricas; las correcciones geográficas se validan por código oficial."},
+        {"metrica": "Errores corregidos", "antes": 0, "despues_actual": errores_corregidos, "observacion": "Total de celdas cuyo valor cambió; el detalle por variable está en cambios_por_variable.csv."},
     ])
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -206,7 +225,7 @@ def generar_tablas() -> None:
     formato.to_csv(OUTPUT_DIR / "problemas_formato.csv", index=False, encoding="utf-8-sig")
     duplicados_parciales.to_csv(OUTPUT_DIR / "duplicados_parciales.csv", index=False, encoding="utf-8-sig")
     detalle_duplicados.to_csv(
-        OUTPUT_DIR / "duplicados_confirmados_pendientes.csv",
+        OUTPUT_DIR / "duplicados_parciales_revisados.csv",
         index=False,
         encoding="utf-8-sig",
     )

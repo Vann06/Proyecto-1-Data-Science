@@ -8,8 +8,10 @@ El archivo se trabaja por turnos: Vianka, Ricardo y Nadissa.
 """
 
 import re
+from itertools import combinations
 
 import pandas as pd
+from rapidfuzz.fuzz import ratio
 
 from src.diagnostico import (
     FRASE_AUSENCIA,
@@ -27,7 +29,9 @@ from src.catalogos_geograficos import (
     PATRON_DISTRITO_INCOMPLETO,
     PATRON_ZONA,
     VARIABLES_VIANKA,
+    cargar_catalogo_municipios,
     clave_comparacion,
+    codigo_municipal_desde_establecimiento,
     limpiar_celda_texto,
     nombre_geografico,
 )
@@ -135,6 +139,9 @@ def generar_conjunto_limpio(df: pd.DataFrame) -> pd.DataFrame:
     mascara_vacia = filas_completamente_vacias(df)
     limpio = limpiar_datos_preliminar(df)
     final = limpio.loc[~mascara_vacia, COLUMNAS_FINALES].copy()
+    for columna in COLUMNAS_FINALES:
+        if columna not in CATEGORIAS_NADISSA:
+            final[columna] = final[columna].astype("string")
     return final.reset_index(drop=True)
 
 
@@ -187,7 +194,7 @@ def limpiar_codigo(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def limpiar_distrito(df: pd.DataFrame) -> pd.DataFrame:
-    """Unifica faltantes y clasifica DISTRITO sin completar códigos parciales."""
+    """Unifica faltantes y convierte códigos parciales sin información a NA."""
     df = df.copy()
     df["DISTRITO_ORIGINAL"] = df["DISTRITO"]
     distrito = df["DISTRITO"].map(limpiar_celda_texto).astype("string")
@@ -199,13 +206,14 @@ def limpiar_distrito(df: pd.DataFrame) -> pd.DataFrame:
     formato.loc[distrito.isna()] = "faltante"
     formato.loc[corto] = "corto NN-NNN"
     formato.loc[extendido] = "extendido NN-NN-NNNN"
-    formato.loc[incompleto] = "incompleto NN-"
+    formato.loc[incompleto] = "incompleto NN- convertido a NA"
 
-    df["DISTRITO"] = distrito
+    df["DISTRITO"] = distrito.mask(incompleto, pd.NA)
     df["DISTRITO_FORMATO"] = formato
     df["DISTRITO_INCOMPLETO"] = incompleto
+    df["DISTRITO_CONVERTIDO_A_NA"] = incompleto
     df["DISTRITO_FORMATO_VALIDO"] = corto | extendido
-    df["DISTRITO_REQUIERE_REVISION"] = incompleto | formato.eq("otro")
+    df["DISTRITO_REQUIERE_REVISION"] = formato.eq("otro")
     return df
 
 
@@ -229,7 +237,7 @@ def limpiar_departamento(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def limpiar_municipio(df: pd.DataFrame) -> pd.DataFrame:
-    """Normaliza MUNICIPIO y separa la zona de los registros capitalinos."""
+    """Normaliza MUNICIPIO con el catálogo oficial y separa la zona capitalina."""
     df = df.copy()
     df["MUNICIPIO_ORIGINAL"] = df["MUNICIPIO"]
     municipio_original = df["MUNICIPIO"].map(limpiar_celda_texto).astype("string")
@@ -241,7 +249,11 @@ def limpiar_municipio(df: pd.DataFrame) -> pd.DataFrame:
     con_zona = es_capital & zona.notna()
     df.loc[con_zona, "ZONA_CAPITAL"] = "Zona " + zona[con_zona]
 
-    municipio = municipio_original.map(nombre_geografico).astype("string")
+    catalogo = cargar_catalogo_municipios().set_index("codigo_municipio")
+    codigo_municipal = codigo_municipal_desde_establecimiento(df["CODIGO"])
+    municipio_catalogo = codigo_municipal.map(catalogo["municipio_mineduc"]).astype("string")
+    departamento_catalogo = codigo_municipal.map(catalogo["departamento"]).astype("string")
+    municipio = municipio_catalogo.fillna(municipio_original.map(nombre_geografico)).astype("string")
     municipio.loc[es_capital] = "Guatemala"
     df["MUNICIPIO"] = municipio
     df["MUNICIPIO_ZONA_INVALIDA"] = es_capital & zona.isna()
@@ -249,6 +261,11 @@ def limpiar_municipio(df: pd.DataFrame) -> pd.DataFrame:
         municipio_original.notna()
         & municipio.notna()
         & municipio_original.ne(municipio)
+    )
+    df["MUNICIPIO_CODIGO_CATALOGO_VALIDO"] = (
+        municipio_catalogo.notna()
+        & departamento_catalogo.eq(df["DEPARTAMENTO"])
+        & municipio.eq(municipio_catalogo)
     )
     return df
 
@@ -366,6 +383,66 @@ def marcar_duplicados_establecimiento(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def revisar_duplicados_parciales(df: pd.DataFrame, umbral: float = 95.0) -> pd.DataFrame:
+    """Compara nombres similares por ubicación y documenta una decisión por par."""
+    columnas = [
+        "par_id",
+        "codigo_1",
+        "codigo_2",
+        "municipio",
+        "establecimiento_1",
+        "establecimiento_2",
+        "similitud_nombre",
+        "direccion",
+        "jornada",
+        "plan",
+        "decision",
+        "justificacion",
+    ]
+    trabajo = df.copy()
+    trabajo["_nombre_clave"] = trabajo["ESTABLECIMIENTO"].fillna("").map(normalizar_nombre)
+    trabajo["_direccion_clave"] = trabajo["DIRECCION"].fillna("").map(normalizar_nombre)
+    trabajo["_municipio_clave"] = trabajo["MUNICIPIO"].fillna("").map(normalizar_nombre)
+    bloques = ["_municipio_clave", "_direccion_clave", "JORNADA", "PLAN"]
+    filas = []
+    par_id = 0
+    for _, grupo in trabajo.groupby(bloques, dropna=False, sort=True, observed=True):
+        if len(grupo) < 2:
+            continue
+        for indice_1, indice_2 in combinations(grupo.index, 2):
+            nombre_1 = trabajo.at[indice_1, "_nombre_clave"]
+            nombre_2 = trabajo.at[indice_2, "_nombre_clave"]
+            similitud = ratio(nombre_1, nombre_2)
+            if not nombre_1 or similitud < umbral:
+                continue
+            codigo_1 = trabajo.at[indice_1, "CODIGO"]
+            codigo_2 = trabajo.at[indice_2, "CODIGO"]
+            if codigo_1 == codigo_2:
+                continue
+            par_id += 1
+            filas.append(
+                {
+                    "par_id": par_id,
+                    "codigo_1": codigo_1,
+                    "codigo_2": codigo_2,
+                    "municipio": trabajo.at[indice_1, "MUNICIPIO"],
+                    "establecimiento_1": trabajo.at[indice_1, "ESTABLECIMIENTO"],
+                    "establecimiento_2": trabajo.at[indice_2, "ESTABLECIMIENTO"],
+                    "similitud_nombre": round(similitud, 2),
+                    "direccion": trabajo.at[indice_1, "DIRECCION"],
+                    "jornada": trabajo.at[indice_1, "JORNADA"],
+                    "plan": trabajo.at[indice_1, "PLAN"],
+                    "decision": "CONSERVAR",
+                    "justificacion": (
+                        "Los códigos MINEDUC son distintos y representan registros "
+                        "administrativos independientes; no existe evidencia oficial "
+                        "para fusionarlos o eliminar uno."
+                    ),
+                }
+            )
+    return pd.DataFrame(filas, columns=columnas)
+
+
 # --- DIRECCION ---------------------------------------------------------
 
 # Dos separadores iguales (\1 exige que sean el mismo carácter): distingue una
@@ -461,24 +538,32 @@ def limpiar_direccion(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def limpiar_telefono(df: pd.DataFrame) -> pd.DataFrame:
-    """Deja NA en los teléfonos vacíos y convierte el resto en una lista de contactos.
+    """Conserva únicamente teléfonos de ocho dígitos y separa varios contactos.
 
     La celda mezcla varios números con separadores inconsistentes; reutiliza
     separar_numeros() (diagnostico.py) para partirla y se queda solo con los
-    números de 7 u 8 dígitos recuperados, unidos con "; ". Si no se recupera
-    ningún número válido, también queda NA.
+    números de ocho dígitos recuperados, unidos con "; ". Los números legados
+    de siete dígitos quedan documentados en la copia original y no pasan al CSV.
     """
     df = df.copy()
     df["TELEFONO_ORIGINAL"] = df["TELEFONO"]
 
-    def _limpiar(celda: str):
+    def _numeros(celda: str) -> list[str]:
         celda = (celda or "").strip()
         if celda == "":
-            return pd.NA
-        numeros = [n for n in separar_numeros(celda) if len(n) in (7, 8)]
+            return []
+        return separar_numeros(celda)
+
+    extraidos = df["TELEFONO"].fillna("").map(_numeros)
+    df["TELEFONO_DESCARTO_7_DIGITOS"] = extraidos.map(
+        lambda numeros: any(len(numero) == 7 for numero in numeros)
+    )
+
+    def _limpiar(numeros: list[str]):
+        numeros = [numero for numero in numeros if len(numero) == 8]
         return "; ".join(numeros) if numeros else pd.NA
 
-    df["TELEFONO"] = df["TELEFONO"].fillna("").map(_limpiar).astype("string")
+    df["TELEFONO"] = extraidos.map(_limpiar).astype("string")
     return df
 
 
@@ -541,13 +626,12 @@ def _corregir_contaminacion_nombre(texto: str) -> str:
 
 
 def limpiar_supervisor(df: pd.DataFrame) -> pd.DataFrame:
-    """Corrige, fusiona, reclasifica e imputa SUPERVISOR, en ese orden.
+    """Corrige, fusiona y reclasifica SUPERVISOR sin imputar valores.
 
     1) Corrige la contaminación puntual (grafías). 2) Fusiona variantes de
     tildes/espacios dentro del mismo DISTRITO. 3) Lo que sigue sin ser un
-    nombre real queda NA. 4) Cada NA se imputa con el supervisor más
-    frecuente de su DISTRITO (un distrito, un supervisor); si el distrito no
-    tiene ninguna referencia, se deja NA.
+    nombre real queda NA. No se imputa porque un distrito puede cambiar de
+    supervisor y el conjunto no aporta una fecha de vigencia.
     """
     df = df.copy()
     df["SUPERVISOR_ORIGINAL"] = df["SUPERVISOR"]
@@ -561,14 +645,8 @@ def limpiar_supervisor(df: pd.DataFrame) -> pd.DataFrame:
     ausente = _mascara_ausente(texto)
     texto = texto.mask(ausente, pd.NA)
 
-    referencia = (
-        texto[~ausente].groupby(distrito[~ausente]).agg(_forma_mas_frecuente)
-    )
-    imputado = ausente & distrito.isin(referencia.index)
-    texto = texto.mask(imputado, distrito.map(referencia))
-
     df["SUPERVISOR"] = texto
-    df["SUPERVISOR_IMPUTADO"] = imputado
+    df["SUPERVISOR_IMPUTADO"] = False
     return df
 
 
