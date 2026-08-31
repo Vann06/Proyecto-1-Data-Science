@@ -1,0 +1,11 @@
+﻿metrica,antes,despues_actual,observacion
+Registros,11890,11867,Se retiraron las 23 filas completamente vacías.
+Variables,17,18,Se agregó ZONA_CAPITAL como variable derivada.
+Valores faltantes,4217 (2.09%),4602 (2.28%),La comparación de faltantes usa las 17 variables originales en ambos estados.
+Variables con faltantes,17,7,"Después de retirar filas vacías, siete variables conservan faltantes reales."
+Duplicados exactos,23,0,Las 23 filas participantes antes eran filas vacías; no quedan duplicados exactos.
+Posibles duplicados,1085,0,"1,085 pares revisados con RapidFuzz; todos se conservan por tener códigos MINEDUC distintos y no queda ninguna decisión pendiente."
+Variables con formato inconsistente,9,0,Los distritos incompletos pasan a NA y los teléfonos finales contienen únicamente números de ocho dígitos.
+Variables con tipo incorrecto,7,0,El conteo se calcula sobre las siete variables con dominio categórico; cargar_csv_limpio aplica el esquema al CSV.
+Categorías inconsistentes,0,0,"No se observaron categorías duplicadas por diferencias de mayúsculas, espacios o tildes dentro de las variables categóricas; las correcciones geográficas se validan por código oficial."
+Errores corregidos,0,44005,Total de celdas cuyo valor cambió; el detalle por variable está en cambios_por_variable.csv.

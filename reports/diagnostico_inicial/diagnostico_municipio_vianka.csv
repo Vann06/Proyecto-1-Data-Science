@@ -1,0 +1,9 @@
+﻿revision,cantidad,detalle
+valores vacios,23,esperado 0
+nombres unicos,352,incluye las zonas registradas por la fuente
+pares departamento-municipio,358,conteo derivado de pares únicos observados
+pares fuera de CIUDAD CAPITAL,336,municipios con establecimientos de Diversificado
+zonas de Ciudad Capital,22,etiquetas ZONA que deben conservarse como sububicacion
+filas capitalinas que no tienen formato ZONA,0,esperado 0
+nombres repetidos en distintos departamentos,6,homonimos posibles; validar siempre junto a DEPARTAMENTO
+filas con vocal acentuada,0,permite medir si la exportacion conserva tildes en municipios

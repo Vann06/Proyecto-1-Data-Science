@@ -8,8 +8,7 @@
 - **Filtro utilizado:** `NIVEL ESCOLAR: DIVERSIFICADO`.
 - **Cobertura:** todo el país.
 - **Archivos obtenidos:** 23 exportaciones.
-- **Fecha de recepción y conversión:** 17 de julio de 2026.
-- **Fecha exacta de descarga:** pendiente de confirmar por el equipo.
+- **Fecha de extracción y conversión documentada por el equipo:** 17 de julio de 2026.
 
 ## Archivos
 
@@ -33,6 +32,19 @@ Durante la conversión:
 - no se normalizaron espacios, tildes, mayúsculas ni teléfonos;
 - no se reemplazaron valores faltantes;
 - se conservaron las filas vacías presentes en las exportaciones.
+
+La conversión es reproducible con `python src/obtencion.py --source-dir RUTA`,
+donde `RUTA` contiene las 23 exportaciones HTML guardadas con extensión `.xls`.
+Si los CSV ya existen, `python src/obtencion.py` valida el esquema, comprueba el
+filtro `DIVERSIFICADO` y genera la unión.
+
+## Catálogo geográfico de referencia
+
+La combinación de departamento y municipio se valida contra los 340 códigos
+municipales publicados por SEGEPLAN en el conjunto *Cálculo Matemático para la
+Asignación Constitucional a las Municipalidades 2026*. El recurso se consultó
+el 31 de agosto de 2026 y el catálogo derivado se conserva en
+`data/reference/municipios_guatemala.csv`.
 
 Por esta razón, los CSV de `data/raw/` se consideran datos crudos y no deben editarse manualmente.
 

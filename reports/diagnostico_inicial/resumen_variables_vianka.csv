@@ -1,0 +1,6 @@
+﻿variable,tipo_leido,registros,faltantes,porcentaje_faltantes,valores_unicos_no_vacios,espacios_inicio_fin,espacios_multiples
+CODIGO,string,11890,23,0.19,11867,0,0
+DISTRITO,string,11890,555,4.67,1681,0,0
+DEPARTAMENTO,string,11890,23,0.19,23,0,0
+MUNICIPIO,string,11890,23,0.19,352,0,0
+DEPARTAMENTAL,string,11890,23,0.19,26,0,0

@@ -22,6 +22,7 @@ data/interim/*
 !data/interim/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/establecimientos_diversificado_limpio.csv
 
 reports/figures/*
 !reports/figures/.gitkeep

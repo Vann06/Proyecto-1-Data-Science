@@ -24,17 +24,7 @@ def cargar_datos() -> pd.DataFrame:
     )
 
 
-# ================================================================
-# TURNO 1 · VIANKA
-# Variables: CODIGO, DISTRITO, DEPARTAMENTO, MUNICIPIO, DEPARTAMENTAL
-# Completar aquí:
-# - número de registros y variables;
-# - tipos de datos;
-# - valores faltantes y valores únicos;
-# - códigos y distritos con formatos extraños;
-# - departamentos o municipios fuera de catálogo;
-# - contradicciones entre variables geográficas.
-# ================================================================
+# El diagnóstico geográfico reutilizable se encuentra en diagnostico_vianka.py.
 
 
 # ================================================================

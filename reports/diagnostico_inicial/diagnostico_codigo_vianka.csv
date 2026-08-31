@@ -1,0 +1,6 @@
+﻿revision,cantidad,resultado
+valores vacios,23,esperado 0
+formato NN-NN-NNNN-NN,11867,debe coincidir con los registros no vacios
+codigos duplicados,0,esperado 0
+pares departamento-municipio con más de un prefijo,0,esperado 0
+prefijos asociados a más de una geografia,0,esperado 0

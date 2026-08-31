@@ -1,0 +1,5 @@
+﻿categoria,cantidad,porcentaje,ejemplos
+formato extendido NN-NN-NNNN,6226,52.36,16-01-0926 | 16-01-0927 | 16-01-0924 | 16-01-0925
+formato corto NN-NNN,5039,42.38,16-006 | 16-031 | 16-026 | 16-005
+vacio,555,4.67,
+incompleto,70,0.59,01- | 17- | 10-
